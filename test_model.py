@@ -226,6 +226,6 @@ if __name__ == "__main__":
     axs[4].grid(True)
 
     plt.tight_layout()
-    plt.savefig("trajectory_plot_new_reward_velocities_new_network.png", dpi=300, bbox_inches="tight")
+    # plt.savefig("trajectory_plot_new_reward_velocities_new_network.png", dpi=300, bbox_inches="tight")
     plt.close()
 
