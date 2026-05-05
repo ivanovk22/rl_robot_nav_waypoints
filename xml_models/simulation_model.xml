@@ -1,0 +1,1369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="chessboard_ground">
+    <option gravity="0 0 -9.81" timestep="0.25" />
+
+    <asset>
+        <!-- Texture scacchiera blu chiaro e blu scuro -->
+        <texture name="chessboard" type="2d" builtin="checker" rgb1="0.0 0.0 1.0"  rgb2="0.0 0.0 1.0"  width="200" height="200"/>
+<!--        <texture name="chessboard" type="2d" builtin="checker" rgb1="255 0 0"  rgb2="255 0 0"  width="200" height="200"/>-->
+        <material name="chessboard_material" texture="chessboard" texrepeat="1 1" texuniform="true"/>
+        <material name="sphere_material" rgba="1 0.2 0.2 1"/>
+        <material name="cube_material" rgba="0.5 0.5 0.5 1"/>
+        <material name="agent_material" rgba="0 0 0 1"/>
+        <material name="wall_material" rgba="0.5 0.5 0.7 1"/>
+        <material name="arrow_material" rgba="0 1 0 1"/>
+
+        <mesh name="cylinder_robot" file="cylinder_robot.stl"/>
+    </asset>
+
+    <worldbody>
+
+
+
+        <geom name="ground" type="plane" size="50 50 0.1" pos="0 0 0" material="chessboard_material"/>
+
+        <light name="light1" pos="0 0 500" dir="0 0 -1" diffuse="0.8 0.8 0.8" specular="0.1 0.1 0.1" castshadow="true"/>
+
+        <body name="cube_body" pos="0 0 0.3">
+            <!-- <geom name="cube" type="mesh" mesh="cylinder_robot" material="arrow_material" /> -->
+            <geom name="cube" type="cylinder" size="0.32 0.3" mass="4.0" material="agent_material" contype="0" conaffinity="0"/>
+
+            <geom name="arrow_shaft" type="box" size="0.3 0.05 0.05" pos="0.15 0 0.65" material="arrow_material" contype="0" conaffinity="0"/>
+            <geom name="arrow_head" type="box" size="0.1 0.1 0.1" pos="0.35 0 0.65" material="arrow_material" contype="0" conaffinity="0"/>
+
+            <joint name="slider_x" type="slide" axis="1 0 0"/>
+            <joint name="slider_y" type="slide" axis="0 1 0"/>
+            <joint name="hinge_z" type="hinge" axis="0 0 1"/>
+        </body>
+<!--        <body name="cube_body" pos="0 0 0.5">-->
+<!--            &lt;!&ndash; <geom name="cube" type="mesh" mesh="cylinder_robot" material="arrow_material" /> &ndash;&gt;-->
+<!--            <geom name="cube" type="cylinder" size="0.32 0.8" mass="1.0" material="agent_material" contype="0" conaffinity="0"/>-->
+
+<!--            <geom name="arrow_shaft" type="box" size="0.3 0.05 0.05" pos="0.15 0 0.9" material="arrow_material" contype="0" conaffinity="0"/>-->
+<!--            <geom name="arrow_head" type="box" size="0.1 0.1 0.1" pos="0.35 0 0.9" material="arrow_material" contype="0" conaffinity="0"/>-->
+
+<!--            <joint name="slider_x" type="slide" axis="1 0 0"/>-->
+<!--            <joint name="slider_y" type="slide" axis="0 1 0"/>-->
+<!--            <joint name="hinge_z" type="hinge" axis="0 0 1"/>-->
+<!--        </body>-->
+
+        <geom name="sphere" type="sphere" size="1" pos="0 0 10" material="sphere_material"/>
+        <geom name="sphere_goal" type="sphere" size="1" pos="0 0 10" material="sphere_material"/>
+<!--        <geom name="wall_north" type="box" size="0.5 33 2" pos="15 0 2" material="wall_material"/>-->
+<!--        <geom name="wall_south" type="box" size="0.5 33 2" pos="-30 0 2" material="wall_material"/>-->
+<!--        <geom name="wall_west" type="box" size="22.5 0.5 2" pos="-7.5 33 2" material="wall_material"/>-->
+<!--        <geom name="wall_east" type="box" size="22.5 0.5 2" pos="-7.5 -30 2" material="wall_material"/>-->
+
+
+<!--        <body name="obstacle1" pos="0 -12.5 1">-->
+<!--            <geom name="obstacle1" type="box" size="10 12.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle2" pos="0 2.5 1">-->
+<!--            <geom name="obstacle2" type="box" size="10 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle3" pos="0 18 1">-->
+<!--            <geom name="obstacle3" type="box" size="10 12.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle4" pos="-16.5 17.5 1">-->
+<!--            <geom name="obstacle4" type="box" size="3.5 12.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle5" pos="-16.5 2.5 1">-->
+<!--            <geom name="obstacle5" type="box" size="3.5 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle6" pos="-16.5 -3.5 1">-->
+<!--            <geom name="obstacle6" type="box" size="3.5 3.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle7" pos="-16.5 -19.5 1">-->
+<!--            <geom name="obstacle7" type="box" size="3.5 10.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle8" pos="-26 2.5 1">-->
+<!--            <geom name="obstacle8" type="box" size="4 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle9" pos="-26 5.25 1">-->
+<!--            <geom name="obstacle9" type="box" size="4 0.75 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle10" pos="-25 9.5 1">-->
+<!--            <geom name="obstacle10" type="box" size="5 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle11" pos="10.5 -24.5 1">-->
+<!--            <geom name="obstacle11" type="box" size="0.5 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle12" pos="14 -24.5 1">-->
+<!--            <geom name="obstacle12" type="box" size="1 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle13" pos="14 2.5 1">-->
+<!--            <geom name="obstacle13" type="box" size="1 0.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle14" pos="2.5 -28.5 1">-->
+<!--            <geom name="obstacle14" type="box" size="12.5 1.5 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle15" pos="-26 0 1">-->
+<!--            <geom name="obstacle15" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle16" pos="-25 -5 1">-->
+<!--            <geom name="obstacle16" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle17" pos="-27 -7 1">-->
+<!--            <geom name="obstacle17" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle18" pos="-26 -10 1">-->
+<!--            <geom name="obstacle18" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle19" pos="-25 -16 1">-->
+<!--            <geom name="obstacle19" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle20" pos="-26 -20 1">-->
+<!--            <geom name="obstacle20" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle21" pos="-23 -24 1">-->
+<!--            <geom name="obstacle21" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle22" pos="-22 -29 1">-->
+<!--            <geom name="obstacle22" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle23" pos="-23 -11 1">-->
+<!--            <geom name="obstacle23" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+
+<!--        <body name="wall_vertical" pos="16.64 8.00 0.5">-->
+<!--        <geom type="box"-->
+<!--              size="0.1 12.24 0.5"-->
+<!--              rgba="0.6 0.6 0.6 1"/>-->
+<!--    </body>-->
+
+
+    <body name="obstacle1" pos="-6.259192928985064 -32.054124961901856 0.5">
+        <geom name="obstacle1" type="box" size="1.0177055775678152 0.40475464797317784 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle2" pos="-3.315414660164583 -31.618563852483994 0.5">
+        <geom name="obstacle2" type="box" size="0.7624030783297773 0.8403157573910391 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle3" pos="-4.659652544955804 -32.09251569643401 0.5">
+        <geom name="obstacle3" type="box" size="0.7125416031697647 0.12351112465711545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle4" pos="-7.858733465406886 -32.09251569643401 0.5">
+        <geom name="obstacle4" type="box" size="0.712541450777203 0.12351112465711545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle5" pos="-9.481455501371531 -32.054124961901856 0.5">
+        <geom name="obstacle5" type="box" size="1.0408873818957636 0.40475464797317784 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle6" pos="-11.104177842121302 -32.09251569643401 0.5">
+        <geom name="obstacle6" type="box" size="0.712541450777203 0.12351112465711545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle7" pos="-2.9193754952758297 -30.19641328863151 0.5">
+        <geom name="obstacle7" type="box" size="0.12351112465711722 0.7125416031697664 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle8" pos="-2.9425879305089904 -28.700235903687897 0.5">
+        <geom name="obstacle8" type="box" size="0.38957634867418456 0.9143425784821702 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle9" pos="-2.9193754952758297 -27.204058518744283 0.5">
+        <geom name="obstacle9" type="box" size="0.12351112465711722 0.7125416031697647 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle10" pos="-3.1419943614751595 -25.591897896982626 0.5">
+        <geom name="obstacle10" type="box" size="0.5889827796403537 1.0303258153002126 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle11" pos="-6.966796555928071 -25.7144821700701 0.5">
+        <geom name="obstacle11" type="box" size="2.407905973788478 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle12" pos="-2.9193754952758297 -23.979737122828404 0.5">
+        <geom name="obstacle12" type="box" size="0.12351112465711722 0.7125414507772021 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle13" pos="-4.144933861627553 -25.489337397135017 0.5">
+        <geom name="obstacle13" type="box" size="0.41395672051204 0.13913441024077855 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle14" pos="-2.9425879305089904 -22.367576501066743 0.5">
+        <geom name="obstacle14" type="box" size="0.38957634867418456 1.030325967692777 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle15" pos="-2.9193754952758297 -20.75541587930509 0.5">
+        <geom name="obstacle15" type="box" size="0.12351112465711722 0.7125414507772021 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle16" pos="-2.322857970131057 -19.33159631209997 0.5">
+        <geom name="obstacle16" type="box" size="1.3436434014020122 0.8419846083511118 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle17" pos="-0.39737991466016354 -18.9024004876562 0.5">
+        <geom name="obstacle17" type="box" size="0.7125414507772021 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle18" pos="1.2825786345626327 -18.67681072843645 0.5">
+        <geom name="obstacle18" type="box" size="1.0981235903687896 0.5919536726607753 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle19" pos="2.9625371837854324 -18.9024004876562 0.5">
+        <geom name="obstacle19" type="box" size="0.7125414507772021 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle20" pos="4.642495580615668 -18.87918805242304 0.5">
+        <geom name="obstacle20" type="box" size="1.098123742761354 0.38957634867418456 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle21" pos="6.322453977445901 -18.9024004876562 0.5">
+        <geom name="obstacle21" type="box" size="0.7125414507772039 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle22" pos="7.968357970131059 -18.87918805242304 0.5">
+        <geom name="obstacle22" type="box" size="1.0640690338311494 0.38957634867418456 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle23" pos="9.614261962816219 -18.9024004876562 0.5">
+        <geom name="obstacle23" type="box" size="0.7125414507772021 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle24" pos="11.212736970435845 -18.87918805242304 0.5">
+        <geom name="obstacle24" type="box" size="1.0166403535507484 0.38957634867418456 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle25" pos="12.79928725998171 -18.9024004876562 0.5">
+        <geom name="obstacle25" type="box" size="0.700616427918316 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle26" pos="14.492953977445904 -18.552020115818348 0.5">
+        <geom name="obstacle26" type="box" size="1.0999070405364222 0.7167442852788781 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle27" pos="16.174695824443763 -18.9024004876562 0.5">
+        <geom name="obstacle27" type="box" size="0.7125416031697682 0.12351112465711722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle28" pos="18.033218073757997 -18.530859341664126 0.5">
+        <geom name="obstacle28" type="box" size="1.27668744285279 0.7379050594330998 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle29" pos="16.34494879609875 -12.339503657421517 0.5">
+        <geom name="obstacle29" type="box" size="2.9649567205120384 4.169827339225844 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle30" pos="13.364071319719596 -11.34722935080768 0.5">
+        <geom name="obstacle30" type="box" size="0.015920755867114167 0.06225038098141056 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle31" pos="12.00564660164584 -11.34722935080768 0.5">
+        <geom name="obstacle31" type="box" size="0.016559128314540317 0.06225038098141056 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle32" pos="11.151132429137459 -11.649258153002132 0.5">
+        <geom name="obstacle32" type="box" size="0.8379550441938406 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle33" pos="-9.743740780249922 -29.439725998171287 0.5">
+        <geom name="obstacle33" type="box" size="0.8928742761353243 2.209644315757391 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle34" pos="-8.917980188966776 -27.1656110941786 0.5">
+        <geom name="obstacle34" type="box" size="0.0671136848521785 0.06447058823529517 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle35" pos="-12.557445900640047 -29.439725998171287 0.5">
+        <geom name="obstacle35" type="box" size="0.8984516915574519 2.209644315757391 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle36" pos="-13.38878390734532 -27.1656110941786 0.5">
+        <geom name="obstacle36" type="box" size="0.06711368485217939 0.06447058823529517 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle37" pos="-12.676778421213044 -32.054124961901856 0.5">
+        <geom name="obstacle37" type="box" size="0.9907659250228589 0.40475464797317784 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle38" pos="-14.24937930508991 -32.09251569643401 0.5">
+        <geom name="obstacle38" type="box" size="0.712541450777203 0.12351112465711545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle39" pos="-15.848919536726608 -32.054124961901856 0.5">
+        <geom name="obstacle39" type="box" size="1.0177055775678143 0.40475464797317784 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle40" pos="-17.44846007314843 -32.09251569643401 0.5">
+        <geom name="obstacle40" type="box" size="0.7125414507772021 0.12351112465711545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle41" pos="-18.947789850655287 -31.594150411459918 0.5">
+        <geom name="obstacle41" type="box" size="0.9174951234379769 0.864729198415116 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle42" pos="-19.49892106065224 -30.14758625419079 0.5">
+        <geom name="obstacle42" type="box" size="0.12351112465711722 0.7125414507772003 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle43" pos="-19.48582749161841 -28.67582246266382 0.5">
+        <geom name="obstacle43" type="box" size="0.3794574824748551 0.8899291374580933 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle44" pos="-19.49892106065224 -27.204058518744283 0.5">
+        <geom name="obstacle44" type="box" size="0.12351112465711722 0.7125416031697647 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle45" pos="-15.467239408716853 -23.947825510515084 0.5">
+        <geom name="obstacle45" type="box" size="4.3980455653764094 2.6743982017677546 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle46" pos="-19.49892106065224 -23.979737122828404 0.5">
+        <geom name="obstacle46" type="box" size="0.12351112465711722 0.7125414507772021 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle47" pos="-16.486637762877173 -22.367576501066743 0.5">
+        <geom name="obstacle47" type="box" size="3.3786472112160926 1.030325967692777 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle48" pos="-18.927321700701004 -23.264839987808593 0.5">
+        <geom name="obstacle48" type="box" size="0.4480882352941187 0.06577263029564229 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle49" pos="-17.578421213044802 -22.990333434928374 0.5">
+        <geom name="obstacle49" type="box" size="0.09130295641572772 0.6577263029564158 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle50" pos="-16.58653916488875 -22.990333434928374 0.5">
+        <geom name="obstacle50" type="box" size="0.09106979579396679 0.6577263029564158 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle51" pos="-15.594657116732701 -22.990333434928374 0.5">
+        <geom name="obstacle51" type="box" size="0.09130295641572683 0.6577263029564158 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle52" pos="-14.603008229198416 -22.990333434928374 0.5">
+        <geom name="obstacle52" type="box" size="0.0908366351722032 0.6577263029564158 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle53" pos="-13.459692928985064 -22.990333434928374 0.5">
+        <geom name="obstacle53" type="box" size="0.24250304785126442 0.6577263029564158 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle54" pos="-19.49892106065224 -20.75541587930509 0.5">
+        <geom name="obstacle54" type="box" size="0.12351112465711722 0.7125414507772021 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle55" pos="-19.334087778116427 -18.131978055470892 0.5">
+        <geom name="obstacle55" type="box" size="0.5311971959768371 2.041602864980188 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle56" pos="-9.95852880219445 -17.75841877476379 0.5">
+        <geom name="obstacle56" type="box" size="2.1950868637610492 1.533235903687899 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle57" pos="-8.078020572996037 -16.07121334958854 0.5">
+        <geom name="obstacle57" type="box" size="0.16794803413593407 0.1539695214873511 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle58" pos="-8.078020572996037 -14.440820786345625 0.5">
+        <geom name="obstacle58" type="box" size="0.16794803413593407 0.15047790307832898 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle59" pos="-15.486200091435537 -18.853890886924717 0.5">
+        <geom name="obstacle59" type="box" size="2.3338614751600115 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle60" pos="11.650220664431576 -15.251574519963425 0.5">
+        <geom name="obstacle60" type="box" size="0.13913441024077855 3.2380371837854316 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle61" pos="8.244612008533982 -15.251574519963425 0.5">
+        <geom name="obstacle61" type="box" size="0.07589149649496996 3.2380371837854316 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle62" pos="8.234333434928375 -11.649258153002132 0.5">
+        <geom name="obstacle62" type="box" size="1.0564647973178882 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle63" pos="4.97813776287717 -15.251574519963425 0.5">
+        <geom name="obstacle63" type="box" size="0.07589149649496996 3.2380371837854316 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle64" pos="4.612910393172811 -11.649258153002132 0.5">
+        <geom name="obstacle64" type="box" size="1.1508716854617482 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle65" pos="1.6357720207253887 -15.251574519963423 0.5">
+        <geom name="obstacle65" type="box" size="0.07589149649496996 2.833282535812252 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle66" pos="1.4374462054251769 -11.85163547698872 0.5">
+        <geom name="obstacle66" type="box" size="1.0022136543736675 0.5666565071624508 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle67" pos="-1.7735190490704067 -15.251574519963425 0.5">
+        <geom name="obstacle67" type="box" size="0.07589149649496996 3.2380371837854316 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle68" pos="-1.9809451386772317 -11.649258153002132 0.5">
+        <geom name="obstacle68" type="box" size="1.0020911307528202 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle69" pos="-5.026502743066137 -14.091244590064003 0.5">
+        <geom name="obstacle69" type="box" size="1.0210873209387383 5.126925480036574 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle70" pos="-13.811787259981712 -11.78662511429442 0.5">
+        <geom name="obstacle70" type="box" size="5.901714721121609 2.5037177689728765 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle71" pos="-8.078020572996037 -10.641353703139286 0.5">
+        <geom name="obstacle71" type="box" size="0.16794803413593407 0.15065086863761046 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle72" pos="-19.360317433709234 -15.088607284364521 0.5">
+        <geom name="obstacle72" type="box" size="0.049618561414202844 1.0934137458092046 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle73" pos="-12.645473940871685 -18.853890886924717 0.5">
+        <geom name="obstacle73" type="box" size="0.5919536726607744 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle74" pos="-18.31147607436757 -19.079035659859798 0.5">
+        <geom name="obstacle74" type="box" size="0.49141450777202067 0.13913441024078033 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle75" pos="-4.177217311795184 -19.079035659859798 0.5">
+        <geom name="obstacle75" type="box" size="0.5107159402621146 0.13913441024078033 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle76" pos="17.27645398146022 -8.907170984455957 0.5">
+        <geom name="obstacle76" type="box" size="2.033451535150565 1.358475769582446 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle77" pos="19.507432642487043 -6.607527430661385 0.5">
+        <geom name="obstacle77" type="box" size="0.1975271258762561 1.5621488875342884 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle78" pos="18.93936619932947 8.072669155745201 0.5">
+        <geom name="obstacle78" type="box" size="0.7655935690338289 13.118047698872298 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle79" pos="16.603744590064007 -3.5094515391648855 0.5">
+        <geom name="obstacle79" type="box" size="0.07589149649496818 0.7125588235294131 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle80" pos="16.603744590064007 -0.8026865284974107 0.5">
+        <geom name="obstacle80" type="box" size="0.07589149649496818 0.9718270344407216 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle81" pos="14.303914355379455 -0.12386955196586058 0.5">
+        <geom name="obstacle81" type="box" size="2.375721731179521 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle82" pos="16.617385705577565 1.416944986284669 0.5">
+        <geom name="obstacle82" type="box" size="0.06225038098141056 0.7471290765010679 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle83" pos="13.755581072843647 -3.8400231636696116 0.5">
+        <geom name="obstacle83" type="box" size="3.0922467235598923 1.1105455653764107 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle84" pos="8.487778116427917 -4.5862895458701605 0.5">
+        <geom name="obstacle84" type="box" size="1.0624809509295954 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle85" pos="5.097957939652545 -4.5862895458701605 0.5">
+        <geom name="obstacle85" type="box" size="1.214263943919537 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle86" pos="1.6575434318805247 -4.5862895458701605 0.5">
+        <geom name="obstacle86" type="box" size="1.1130752819262408 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle87" pos="-1.7322767448948486 -4.5862895458701605 0.5">
+        <geom name="obstacle87" type="box" size="1.1636696129228898 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle88" pos="-3.4524839987808598 -4.597911917098443 0.5">
+        <geom name="obstacle88" type="box" size="0.651827491618409 0.07233556842426125 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle89" pos="-0.01206949100883925 -4.597911917098443 0.5">
+        <geom name="obstacle89" type="box" size="0.6518274916184108 0.07233556842426125 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle90" pos="3.327156354769887 -4.597911917098443 0.5">
+        <geom name="obstacle90" type="box" size="0.651827491618409 0.07233556842426125 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle91" pos="6.868759524535202 -4.597911917098443 0.5">
+        <geom name="obstacle91" type="box" size="0.6518274916184073 0.07233556842426125 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle92" pos="10.106796708320637 -4.597911917098443 0.5">
+        <geom name="obstacle92" type="box" size="0.651827491618409 0.07233556842426125 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle93" pos="14.668193538555318 4.635004724169459 0.5">
+        <geom name="obstacle93" type="box" size="2.0114425480036573 1.4485518134715072 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle94" pos="12.292471807375797 3.974271258762574 0.5">
+        <geom name="obstacle94" type="box" size="0.3642791831758636 1.4925327644011013 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle95" pos="12.292471807375797 8.072412069491008 0.5">
+        <geom name="obstacle95" type="box" size="0.3642791831758636 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle96" pos="12.292471807375797 12.170552880219446 0.5">
+        <geom name="obstacle96" type="box" size="0.3642791831758636 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle97" pos="12.292471807375797 16.26869369094788 0.5">
+        <geom name="obstacle97" type="box" size="0.3642791831758636 1.4925327644011013 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle98" pos="13.808907497714113 20.053874428527887 0.5">
+        <geom name="obstacle98" type="box" size="3.1455731484303584 1.1795726912526696 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle99" pos="16.617385705577565 19.594493904297472 0.5">
+        <geom name="obstacle99" type="box" size="0.06225038098141056 0.71162740018287 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle100" pos="14.668193538555318 16.322606674794265 0.5">
+        <geom name="obstacle100" type="box" size="2.0114425480036573 1.537880981408108 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle101" pos="14.668193538555318 12.400519963425786 0.5">
+        <geom name="obstacle101" type="box" size="2.0114425480036573 1.361826882048156 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle102" pos="14.668193538555318 8.561124961901857 0.5">
+        <geom name="obstacle102" type="box" size="2.0114425480036573 1.455189271563551 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle103" pos="19.059463578177382 22.631529259372147 0.5">
+        <geom name="obstacle103" type="box" size="0.21502590673575384 1.4408124047546487 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle104" pos="18.6783768668089 24.961800822919844 0.5">
+        <geom name="obstacle104" type="box" size="0.596112618104236 0.8894591587930485 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle105" pos="18.809021639743982 27.79408229198415 0.5">
+        <geom name="obstacle105" type="box" size="0.4654678451691545 1.9428223102712572 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle106" pos="18.973774611398962 30.47458229198415 0.5">
+        <geom name="obstacle106" type="box" size="0.891510362694298 0.7376776897287414 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle107" pos="17.41929183175861 30.667840292593723 0.5">
+        <geom name="obstacle107" type="box" size="0.6629724169460545 0.3541603169765324 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle108" pos="16.432616580310878 30.667840292593723 0.5">
+        <geom name="obstacle108" type="box" size="0.32370283450167747 0.3541603169765324 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle109" pos="14.907053642182259 30.667840292593723 0.5">
+        <geom name="obstacle109" type="box" size="1.2018601036269416 0.3541603169765324 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle110" pos="8.487778116427917 20.731113684852183 0.5">
+        <geom name="obstacle110" type="box" size="1.0624809509295954 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle111" pos="5.097957939652545 20.731113684852183 0.5">
+        <geom name="obstacle111" type="box" size="1.214263943919537 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle112" pos="8.53524580920451 24.540866808899725 0.5">
+        <geom name="obstacle112" type="box" size="1.316563700091434 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle113" pos="5.022307985370313 24.540866808899725 0.5">
+        <geom name="obstacle113" type="box" size="1.0738215483084428 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle114" pos="6.6574058213959155 24.31066260286498 0.5">
+        <geom name="obstacle114" type="box" size="0.5612762877171598 0.13913441024077855 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle115" pos="1.7972657726302934 24.540866808899725 0.5">
+        <geom name="obstacle115" type="box" size="0.8252755257543427 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle116" pos="-0.11701874428527859 24.31066260286498 0.5">
+        <geom name="obstacle116" type="box" size="1.0890089911612293 0.13913441024077855 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle117" pos="-2.1346107893934754 24.540866808899725 0.5">
+        <geom name="obstacle117" type="box" size="0.9285830539469675 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle118" pos="-5.2487660774154214 25.09663532459616 0.5">
+        <geom name="obstacle118" type="box" size="0.8596274001828696 1.0222281316671733 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle119" pos="-6.389819719597682 30.09615345931119 0.5">
+        <geom name="obstacle119" type="box" size="1.8358742761353248 0.946084882657722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle120" pos="-2.078059585492227 30.67795915879305 0.5">
+        <geom name="obstacle120" type="box" size="1.0592445900640044 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle121" pos="1.4794841511734234 30.67795915879305 0.5">
+        <geom name="obstacle121" type="box" size="1.0816578786955198 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle122" pos="5.036595245352027 30.67795915879305 0.5">
+        <geom name="obstacle122" type="box" size="1.0588119475769577 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle123" pos="8.55380036574215 30.67795915879305 0.5">
+        <geom name="obstacle123" type="box" size="1.0417519049070396 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle124" pos="-3.845624809509294 30.733612922889364 0.5">
+        <geom name="obstacle124" type="box" size="0.7916897287412379 0.08601036269429585 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle125" pos="-0.3104943614751612 30.733612922889364 0.5">
+        <geom name="obstacle125" type="box" size="0.7916897287412361 0.08601036269429585 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle126" pos="3.269462663822008 30.733612922889364 0.5">
+        <geom name="obstacle126" type="box" size="0.7916897287412361 0.08601036269429585 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle127" pos="6.803727826882049 30.733612922889364 0.5">
+        <geom name="obstacle127" type="box" size="0.7916897287412361 0.08601036269429585 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle128" pos="10.303872904602251 30.733612922889364 0.5">
+        <geom name="obstacle128" type="box" size="0.7916897287412361 0.08601036269429585 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle129" pos="-7.427621761658029 30.1361397439805 0.5">
+        <geom name="obstacle129" type="box" size="0.05059433099664723 0.025757238646754388 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle130" pos="-6.704911155135628 29.209459920755876 0.5">
+        <geom name="obstacle130" type="box" size="0.7733049375190486 0.09141328863151443 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle131" pos="-6.644197957939651 27.6344660164584 0.5">
+        <geom name="obstacle131" type="box" size="0.8340181347150253 1.5156025601950667 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle132" pos="-6.6540681194757685 26.949402316366964 0.5">
+        <geom name="obstacle132" type="box" size="0.7229593111856136 0.1770801584882662 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle133" pos="-5.716580310880829 27.6344660164584 0.5">
+        <geom name="obstacle133" type="box" size="0.09359951234379693 1.5156025601950667 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle134" pos="-10.496619323377018 29.209459920755876 0.5">
+        <geom name="obstacle134" type="box" size="0.7538963730569952 0.09141328863151443 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle135" pos="-10.496619323377018 27.85374443767144 0.5">
+        <geom name="obstacle135" type="box" size="0.7538963730569952 0.45479289850655036 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle136" pos="-10.496619323377018 26.30132886315148 0.5">
+        <geom name="obstacle136" type="box" size="0.7538963730569952 0.0860103626942994 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle137" pos="-9.793317281316671 30.1361397439805 0.5">
+        <geom name="obstacle137" type="box" size="0.05059433099664723 0.025757238646754388 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle138" pos="-7.617336025601949 24.464975312404754 0.5">
+        <geom name="obstacle138" type="box" size="0.33796418774763914 0.29344711978055216 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle139" pos="-6.6938826577263 24.247419689119173 0.5">
+        <geom name="obstacle139" type="box" size="0.5854891801280093 0.07589149649497173 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle140" pos="-10.931205729960377 24.559715330691866 0.5">
+        <geom name="obstacle140" type="box" size="1.6595507467235606 0.38818713806766425 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle141" pos="-10.283039622066443 25.023445443462357 0.5">
+        <geom name="obstacle141" type="box" size="0.9674760743675712 0.2650230112770515 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle142" pos="-12.272667022249314 27.996459615970736 0.5">
+        <geom name="obstacle142" type="box" size="0.3180894544346238 0.050594330996645454 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle143" pos="-14.234790765010667 27.996459615970736 0.5">
+        <geom name="obstacle143" type="box" size="0.3180894544346238 0.050594330996645454 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle144" pos="-11.079752971654983 28.337148125571474 0.5">
+        <geom name="obstacle144" type="box" size="1.4374177080158486 2.5533072234075007 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle145" pos="1.6575434318805247 20.731113684852183 0.5">
+        <geom name="obstacle145" type="box" size="1.1130752819262408 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle146" pos="-1.7322767448948486 20.731113684852183 0.5">
+        <geom name="obstacle146" type="box" size="1.1636696129228898 0.36427918317586006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle147" pos="-5.107717616580311 20.342333434928374 0.5">
+        <geom name="obstacle147" type="box" size="1.0986959768363302 1.4680316976531564 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle148" pos="-5.504084120694909 16.26869369094788 0.5">
+        <geom name="obstacle148" type="box" size="0.3313928680280398 1.4925327644011013 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle149" pos="-5.504084120694909 12.170552880219446 0.5">
+        <geom name="obstacle149" type="box" size="0.3313928680280398 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle150" pos="-5.504084120694909 8.072412069491008 0.5">
+        <geom name="obstacle150" type="box" size="0.3313928680280398 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle151" pos="-5.504084120694909 3.974271258762574 0.5">
+        <geom name="obstacle151" type="box" size="0.3313928680280398 1.4925327644011013 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle152" pos="-5.504084120694909 -0.12386955196586058 0.5">
+        <geom name="obstacle152" type="box" size="0.3313928680280398 1.4925327644010977 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle153" pos="-4.922249314233465 -3.95894468149954 0.5">
+        <geom name="obstacle153" type="box" size="0.9132276744894838 1.2294670832063392 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle154" pos="-4.869867570862542 -5.107613227674488 0.5">
+        <geom name="obstacle154" type="box" size="0.23705105150868633 0.1570444986284656 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle155" pos="-5.918751447729351 -4.060578482170067 0.5">
+        <geom name="obstacle155" type="box" size="0.08327445900640207 1.2040792441328865 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle156" pos="-5.918751447729351 -0.4462586101798216 0.5">
+        <geom name="obstacle156" type="box" size="0.08327445900640207 1.043122066443157 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle157" pos="-7.546083815909784 0.48401889667784204 0.5">
+        <geom name="obstacle157" type="box" size="0.36398872295031914 0.11284455958549344 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle158" pos="-6.19946571167327 3.233692014629682 0.5">
+        <geom name="obstacle158" type="box" size="0.3639887229503209 0.11284471197805601 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle159" pos="-7.8267980798537025 1.9717000914355367 0.5">
+        <geom name="obstacle159" type="box" size="0.08327445900640029 1.3748366351722012 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle160" pos="-8.078020572996037 3.856571014934474 0.5">
+        <geom name="obstacle160" type="box" size="0.16794803413593407 0.5281790612618096 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle161" pos="-8.078020572996037 2.8779300518134754 0.5">
+        <geom name="obstacle161" type="box" size="0.16794803413593407 0.4504619018591889 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle162" pos="-8.078020572996037 1.9519388905821415 0.5">
+        <geom name="obstacle162" type="box" size="0.16794803413593407 0.47552925937214496 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle163" pos="-8.363764553489787 7.862320938738193 0.5">
+        <geom name="obstacle163" type="box" size="0.1177959463578171 2.151625723864676 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle164" pos="-8.078020572996037 7.858829167936602 0.5">
+        <geom name="obstacle164" type="box" size="0.16794803413593407 1.8471781469064332 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle165" pos="-8.078020572996037 9.859976988722952 0.5">
+        <geom name="obstacle165" type="box" size="0.16794803413593407 0.15396967387991722 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle166" pos="-8.078020572996037 5.861173117951843 0.5">
+        <geom name="obstacle166" type="box" size="0.16794803413593407 0.15047790307832543 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle167" pos="-8.078020572996037 14.115358427308752 0.5">
+        <geom name="obstacle167" type="box" size="0.16794803413593407 2.474510819871991 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle168" pos="-8.363764553489787 14.117104236513256 0.5">
+        <geom name="obstacle168" type="box" size="0.1177959463578171 2.7772127400182853 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle169" pos="-8.078020572996037 16.742093111856143 0.5">
+        <geom name="obstacle169" type="box" size="0.16794803413593407 0.15222386467539906 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle170" pos="-8.078020572996037 11.490369551965866 0.5">
+        <geom name="obstacle170" type="box" size="0.16794803413593407 0.1504780554708951 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle171" pos="-6.244536726607741 20.264701920146297 0.5">
+        <geom name="obstacle171" type="box" size="0.03812313319109961 0.029412679061262992 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle172" pos="-6.10713303870771 21.152113989637307 0.5">
+        <geom name="obstacle172" type="box" size="0.1755268210911307 0.30969277659250594 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle173" pos="-8.078020572996037 18.372485675099057 0.5">
+        <geom name="obstacle173" type="box" size="0.16794803413593407 0.15222386467540616 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle174" pos="-7.676435385553185 20.264701920146297 0.5">
+        <geom name="obstacle174" type="box" size="0.038122980798536155 0.029412679061262992 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle175" pos="-8.116653459311184 21.152113989637307 0.5">
+        <geom name="obstacle175" type="box" size="0.4783410545565365 0.30969277659250594 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle176" pos="-11.37730082291984 21.152113989637307 0.5">
+        <geom name="obstacle176" type="box" size="0.35377842121304504 0.30969277659250594 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle177" pos="-14.240975312404753 21.411212435233164 0.5">
+        <geom name="obstacle177" type="box" size="2.5098960682718676 0.050594330996649006 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle178" pos="-12.23271487351417 19.683565376409632 0.5">
+        <geom name="obstacle178" type="box" size="4.51815650716245 1.1588558366351691 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle179" pos="-13.574980646144468 19.227775525754343 0.5">
+        <geom name="obstacle179" type="box" size="5.329012039012497 1.007513715330692 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle180" pos="-19.308747333130142 13.976004419384331 0.5">
+        <geom name="obstacle180" type="box" size="0.40475464797317784 2.2689462054251734 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle181" pos="-18.75726912526669 13.976004419384335 0.5">
+        <geom name="obstacle181" type="box" size="0.14672355989027785 2.069680432794879 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle182" pos="-19.308747333130142 7.366660316976532 0.5">
+        <geom name="obstacle182" type="box" size="0.40475464797317784 2.3368623895153924 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle183" pos="-18.75726912526669 7.366660164583969 0.5">
+        <geom name="obstacle183" type="box" size="0.14672355989027785 2.137596769277664 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle184" pos="-6.247530326120085 -8.460872295032003 0.5">
+        <geom name="obstacle184" type="box" size="0.3159241085035056 0.11284455958549167 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle185" pos="-5.282211368485218 -8.201822310271258 0.5">
+        <geom name="obstacle185" type="box" size="0.6493948491313617 1.1814608351112454 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle186" pos="-8.078020572996037 -8.409795489180127 0.5">
+        <geom name="obstacle186" type="box" size="0.16794803413593407 0.75496251142944 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle187" pos="-7.8267980798537025 -6.758230265163059 0.5">
+        <geom name="obstacle187" type="box" size="0.08327445900640029 1.8154865894544354 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle188" pos="-7.546083815909784 -4.7139241085035035 0.5">
+        <geom name="obstacle188" type="box" size="0.36398872295031914 0.22881956720511987 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle189" pos="-19.308747333130142 -5.165303108808287 0.5">
+        <geom name="obstacle189" type="box" size="0.40475464797317784 2.114068729046023 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle190" pos="-18.444057299603777 -4.968132429137459 0.5">
+        <geom name="obstacle190" type="box" size="0.4599353855531856 0.15827628771716107 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle191" pos="-15.911325358122523 -4.968132429137459 0.5">
+        <geom name="obstacle191" type="box" size="0.7468517220359647 0.15827628771716107 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle192" pos="-19.360317433709234 -2.049466778421209 0.5">
+        <geom name="obstacle192" type="box" size="0.049618561414202844 1.0934137458092046 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle193" pos="-19.360317433709234 -8.281139743980493 0.5">
+        <geom name="obstacle193" type="box" size="0.049618561414202844 1.093413745809201 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle194" pos="-11.53727308747333 -3.089211673270345 0.5">
+        <geom name="obstacle194" type="box" size="3.627200548613228 4.5656213044803415 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle195" pos="-19.308747333130142 0.9892817738494379 0.5">
+        <geom name="obstacle195" type="box" size="0.40475464797317784 2.0369806461444675 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle196" pos="-13.574980646144468 2.540338006705273 0.5">
+        <geom name="obstacle196" type="box" size="5.329012039012497 1.8444120694910104 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle197" pos="-19.360317433709234 4.02803002133496 0.5">
+        <geom name="obstacle197" type="box" size="0.049618561414202844 1.0934137458092046 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle198" pos="-19.360317433709234 10.705290460225541 0.5">
+        <geom name="obstacle198" type="box" size="0.049618561414202844 1.093413593416642 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle199" pos="-19.360317433709234 17.24671822615056 0.5">
+        <geom name="obstacle199" type="box" size="0.049618561414202844 1.0934137458092046 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle200" pos="-18.65896053032612 19.54545367266077 0.5">
+        <geom name="obstacle200" type="box" size="1.0545414507772009 1.2969675403840313 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle201" pos="-17.17764523011277 20.470552880219447 0.5">
+        <geom name="obstacle201" type="box" size="0.4267738494361488 0.23526363913441273 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle202" pos="-17.17764523011277 21.083811642791837 0.5">
+        <geom name="obstacle202" type="box" size="0.4267738494361488 0.3779951234379766 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle203" pos="-8.934014782078634 30.532048613227673 0.5">
+        <geom name="obstacle203" type="box" size="0.7966228284059742 0.13579167936605074 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle204" pos="-13.225491161231332 30.618221731179524 0.5">
+        <geom name="obstacle204" type="box" size="0.7880833587320932 0.04961856141419929 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle205" pos="12.98387259981713 28.235036117037488 0.5">
+        <geom name="obstacle205" type="box" size="1.9716790612618098 4.223843492837553 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle206" pos="15.75133892106065 24.540866808899725 0.5">
+        <geom name="obstacle206" type="box" size="0.7957872599817115 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle207" pos="16.65172279792746 24.540866808899725 0.5">
+        <geom name="obstacle207" type="box" size="0.1045966168850967 0.3693386162755239 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle208" pos="16.49180128009753 26.923672965559277 0.5">
+        <geom name="obstacle208" type="box" size="0.050594330996645454 2.0134675403840276 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle209" pos="16.49180128009753 30.28838281011887 0.5">
+        <geom name="obstacle209" type="box" size="0.050594330996645454 0.025297165498322727 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle210" pos="12.798415117342273 27.61194270039622 0.5">
+        <geom name="obstacle210" type="box" size="0.050594330996649006 2.701737275220971 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle211" pos="16.365315452605916 26.923672965559277 0.5">
+        <geom name="obstacle211" type="box" size="0.07589149649496818 2.0134675403840276 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle212" pos="12.577587473331299 23.833831149039927 0.5">
+        <geom name="obstacle212" type="box" size="0.6493948491313652 0.3376970435842743 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle213" pos="12.577587473331299 21.402733160621764 0.5">
+        <geom name="obstacle213" type="box" size="0.6493948491313652 0.33769689119171176 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle214" pos="10.106796708320637 20.7427359036879 0.5">
+        <geom name="obstacle214" type="box" size="0.651827491618409 0.07233541603169868 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle215" pos="6.868759524535202 20.7427359036879 0.5">
+        <geom name="obstacle215" type="box" size="0.6518274916184073 0.07233541603169868 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle216" pos="3.327156354769887 20.7427359036879 0.5">
+        <geom name="obstacle216" type="box" size="0.651827491618409 0.07233541603169868 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle217" pos="-0.01206949100883925 20.7427359036879 0.5">
+        <geom name="obstacle217" type="box" size="0.6518274916184108 0.07233541603169868 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle218" pos="-3.4524839987808598 20.7427359036879 0.5">
+        <geom name="obstacle218" type="box" size="0.651827491618409 0.07233541603169868 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle219" pos="-5.548592654678451 1.925200853398355 0.5">
+        <geom name="obstacle219" type="box" size="0.07233541603169868 0.651827491618409 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle220" pos="-5.548592654678451 6.023341664126793 0.5">
+        <geom name="obstacle220" type="box" size="0.07233541603169868 0.651827491618409 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle221" pos="-5.548592654678451 10.121482474855227 0.5">
+        <geom name="obstacle221" type="box" size="0.07233541603169868 0.6518274916184055 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle222" pos="-5.548592654678451 14.219623285583666 0.5">
+        <geom name="obstacle222" type="box" size="0.07233541603169868 0.6518274916184055 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle223" pos="-5.548592654678451 18.3177640963121 0.5">
+        <geom name="obstacle223" type="box" size="0.07233541603169868 0.651827491618409 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle224" pos="-5.548592654678451 -2.172939957330083 0.5">
+        <geom name="obstacle224" type="box" size="0.07233541603169868 0.651827491618409 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle225" pos="18.558579701310574 -16.85349390429747 0.5">
+        <geom name="obstacle225" type="box" size="0.13913441024077855 0.9394603779335569 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle226" pos="-16.815101645839682 26.514045717768976 0.5">
+        <geom name="obstacle226" type="box" size="2.8984003352636387 2.3425175251447747 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle227" pos="-15.371229503200244 30.48064126790613 0.5">
+        <geom name="obstacle227" type="box" size="1.437417555623285 0.4098140810728452 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle228" pos="-6.920796251142944 24.805889820176777 0.5">
+        <geom name="obstacle228" type="box" size="0.99059539774459 0.48257863456263195 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle229" pos="-11.602546632124351 25.36587168546175 0.5">
+        <geom name="obstacle229" type="box" size="0.3520309356903377 0.41796921670222176 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle230" pos="12.243380981408109 -2.172940109722642 0.5">
+        <geom name="obstacle230" type="box" size="0.15328649801889682 0.6529492532764429 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle231" pos="12.243380981408109 1.925200853398355 0.5">
+        <geom name="obstacle231" type="box" size="0.15328649801889682 0.6563730569948198 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle232" pos="12.243380981408109 6.023341664126793 0.5">
+        <geom name="obstacle232" type="box" size="0.15328649801889682 0.6563730569948198 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle233" pos="12.243380981408109 10.121482474855227 0.5">
+        <geom name="obstacle233" type="box" size="0.15328649801889682 0.6563730569948163 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle234" pos="12.243380981408109 14.219623285583662 0.5">
+        <geom name="obstacle234" type="box" size="0.15328649801889682 0.6563730569948198 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle235" pos="12.243380981408109 18.3177640963121 0.5">
+        <geom name="obstacle235" type="box" size="0.15328649801889682 0.6563730569948198 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle236" pos="-17.51696754038403 30.369333739713504 0.5">
+        <geom name="obstacle236" type="box" size="0.8127468759524543 0.29850655288021954 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle237" pos="-19.539395915879304 21.402773392258457 0.5">
+        <geom name="obstacle237" type="box" size="0.1741060652240165 0.5603521792136554 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle238" pos="-19.308747333130142 22.298293050899115 0.5">
+        <geom name="obstacle238" type="box" size="0.40475464797317784 0.3351674794270032 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle239" pos="-18.191867875647667 22.528976379152702 0.5">
+        <geom name="obstacle239" type="box" size="0.7121248095092962 0.07412755257543324 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle240" pos="-19.501693843340444 23.189998171289243 0.5">
+        <geom name="obstacle240" type="box" size="0.06347866504114563 0.4047546479731814 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle241" pos="-19.501693843340444 22.70935202682109 0.5">
+        <geom name="obstacle241" type="box" size="0.06347866504114563 0.07589149649497173 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle242" pos="-19.501693843340444 23.670644315757393 0.5">
+        <geom name="obstacle242" type="box" size="0.06347866504114563 0.07589149649496818 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle243" pos="-19.501693843340444 23.95903200243828 0.5">
+        <geom name="obstacle243" type="box" size="0.06347866504114563 0.21249619018592014 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle244" pos="-17.543221731179518 23.95903200243828 0.5">
+        <geom name="obstacle244" type="box" size="0.06347866504114563 0.21249619018592014 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle245" pos="-17.543221731179518 23.670644315757393 0.5">
+        <geom name="obstacle245" type="box" size="0.06347866504114563 0.07589149649496818 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle246" pos="-17.543221731179518 23.189998171289243 0.5">
+        <geom name="obstacle246" type="box" size="0.06347866504114563 0.4047546479731814 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle247" pos="-17.543221731179518 22.6941737275221 0.5">
+        <geom name="obstacle247" type="box" size="0.06347866504114563 0.09106979579396324 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle248" pos="-14.7259079548918 29.77033313014325 0.5">
+        <geom name="obstacle248" type="box" size="0.17302773544651018 0.3004940566900345 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle249" pos="-14.7259079548918 29.163201158183483 0.5">
+        <geom name="obstacle249" type="box" size="0.17302773544651018 0.3066379152697323 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle250" pos="-15.080068271868331 29.77033313014325 0.5">
+        <geom name="obstacle250" type="box" size="0.18113258153002132 0.3004940566900345 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle251" pos="-15.080068271868331 29.163201158183483 0.5">
+        <geom name="obstacle251" type="box" size="0.18113258153002132 0.3066379152697323 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle252" pos="16.284364523011277 -14.305460530326119 0.5">
+        <geom name="obstacle252" type="box" size="0.8904602255409948 1.45205729960378 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle253" pos="16.167997561718987 -15.69680463273392 0.5">
+        <geom name="obstacle253" type="box" size="0.5615970740627887 0.06071319719597845 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle254" pos="-11.704419384334045 -20.99610774154221 0.5">
+        <geom name="obstacle254" type="box" size="0.34910088387686766 0.27731956720511874 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle255" pos="6.982014934471199 -11.649258153002132 0.5">
+        <geom name="obstacle255" type="box" size="0.19585370313928863 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle256" pos="0.23937869551965818 -11.649258153002132 0.5">
+        <geom name="obstacle256" type="box" size="0.1958538555318512 0.36427918317586183 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle257" pos="-15.676074367570862 -20.52919369094788 0.5">
+        <geom name="obstacle257" type="box" size="1.9832977750685759 0.15225708625419188 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle258" pos="-15.207960987503808 -19.50280234684547 0.5">
+        <geom name="obstacle258" type="box" size="0.1517829929899417 0.28463227674489566 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle259" pos="-15.207960987503808 -20.082185614142027 0.5">
+        <geom name="obstacle259" type="box" size="0.1517829929899417 0.29475099055166076 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle260" pos="-15.511526973483694 -19.50280234684547 0.5">
+        <geom name="obstacle260" type="box" size="0.15178299298994258 0.28463227674489566 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle261" pos="-15.511526973483694 -20.082185614142027 0.5">
+        <geom name="obstacle261" type="box" size="0.15178299298994258 0.29475099055166076 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle262" pos="-13.99634257848217 -20.971407650106674 0.5">
+        <geom name="obstacle262" type="box" size="0.1517829929899417 0.28995687290460026 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle263" pos="-14.299908564462054 -20.971407650106674 0.5">
+        <geom name="obstacle263" type="box" size="0.15178299298994258 0.28995687290460026 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle264" pos="-13.99634257848217 -21.551321395915878 0.5">
+        <geom name="obstacle264" type="box" size="0.1517829929899417 0.2899568729046038 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle265" pos="-14.299908564462054 -21.551321395915878 0.5">
+        <geom name="obstacle265" type="box" size="0.15178299298994258 0.2899568729046038 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle266" pos="15.087808594940565 -15.516608351112463 0.5">
+        <geom name="obstacle266" type="box" size="0.3060957025297171 0.15178299298994347 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle267" pos="15.087808594940565 -15.21304236513258 0.5">
+        <geom name="obstacle267" type="box" size="0.3060957025297171 0.1517829929899399 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle268" pos="14.475617189881131 -15.21304236513258 0.5">
+        <geom name="obstacle268" type="box" size="0.3060957025297171 0.1517829929899399 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle269" pos="14.475617189881131 -15.516608351112463 0.5">
+        <geom name="obstacle269" type="box" size="0.3060957025297171 0.15178299298994347 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle270" pos="18.108290155440415 -15.516608351112463 0.5">
+        <geom name="obstacle270" type="box" size="0.3111551356293809 0.15178299298994347 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle271" pos="17.485979884181653 -15.516608351112463 0.5">
+        <geom name="obstacle271" type="box" size="0.3111551356293809 0.15178299298994347 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle272" pos="18.108290155440415 -15.21304236513258 0.5">
+        <geom name="obstacle272" type="box" size="0.3111551356293809 0.1517829929899399 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle273" pos="17.485979884181653 -15.21304236513258 0.5">
+        <geom name="obstacle273" type="box" size="0.3111551356293809 0.1517829929899399 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle274" pos="-10.424654678451692 -2.0569651021030175 0.5">
+        <geom name="obstacle274" type="box" size="2.514582139591588 0.5724152697348366 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle275" pos="-10.308745961597072 -2.0569651021030175 0.5">
+        <geom name="obstacle275" type="box" size="2.3986734227369704 0.4332360560804638 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle276" pos="-8.187600731484302 -0.0927567814690633 0.5">
+        <geom name="obstacle276" type="box" size="0.1517829929899408 0.4639311185614119 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle277" pos="-8.187600731484302 -1.020618866199328 0.5">
+        <geom name="obstacle277" type="box" size="0.1517829929899408 0.4639309661688529 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle278" pos="-8.491166717464186 -0.0927567814690633 0.5">
+        <geom name="obstacle278" type="box" size="0.15178299298994258 0.4639311185614119 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle279" pos="-8.491166717464186 -1.020618866199328 0.5">
+        <geom name="obstacle279" type="box" size="0.15178299298994258 0.4639309661688529 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle280" pos="-8.187600731484302 -3.0933113380067034 0.5">
+        <geom name="obstacle280" type="box" size="0.1517829929899408 0.4639309661688493 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle281" pos="-8.491166717464186 -3.0933113380067034 0.5">
+        <geom name="obstacle281" type="box" size="0.15178299298994258 0.4639309661688493 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle282" pos="-8.187600731484302 -4.021173422736968 0.5">
+        <geom name="obstacle282" type="box" size="0.1517829929899408 0.46393111856141545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle283" pos="-8.491166717464186 -4.021173422736968 0.5">
+        <geom name="obstacle283" type="box" size="0.15178299298994258 0.46393111856141545 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle284" pos="14.548978969826273 27.55628893629991 0.5">
+        <geom name="obstacle284" type="box" size="0.38957634867418633 1.0928375495275837 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle285" pos="14.58945443462359 27.55628893629991 0.5">
+        <geom name="obstacle285" type="box" size="0.38957634867418633 1.0928375495275837 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle286" pos="15.306629076501064 28.512521792136546 0.5">
+        <geom name="obstacle286" type="box" size="0.3275982932032875 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle287" pos="15.96182566290765 28.512521792136546 0.5">
+        <geom name="obstacle287" type="box" size="0.32759829320329814 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle288" pos="15.306629076501064 28.23931240475465 0.5">
+        <geom name="obstacle288" type="box" size="0.3275982932032875 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle289" pos="15.96182566290765 28.23931240475465 0.5">
+        <geom name="obstacle289" type="box" size="0.32759829320329814 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle290" pos="13.176607741542213 28.23931240475465 0.5">
+        <geom name="obstacle290" type="box" size="0.32759829320329104 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle291" pos="13.831804327948795 28.23931240475465 0.5">
+        <geom name="obstacle291" type="box" size="0.32759829320329104 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle292" pos="13.176607741542213 27.966103017372753 0.5">
+        <geom name="obstacle292" type="box" size="0.32759829320329104 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle293" pos="13.831804327948795 27.966103017372753 0.5">
+        <geom name="obstacle293" type="box" size="0.32759829320329104 0.1366046936909484 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle294" pos="-18.054007924413288 28.507462359036882 0.5">
+        <geom name="obstacle294" type="box" size="1.6594940566900327 2.3829929899420925 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle295" pos="-18.11181255714721 25.782957634867422 0.5">
+        <geom name="obstacle295" type="box" size="0.15178299298994347 0.34151173422736747 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle296" pos="-18.415378543127098 25.782957634867422 0.5">
+        <geom name="obstacle296" type="box" size="0.1517829929899417 0.34151173422736747 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle297" pos="-18.11181255714721 25.09993416641268 0.5">
+        <geom name="obstacle297" type="box" size="0.15178299298994347 0.3415117342273746 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="obstacle298" pos="-18.415378543127098 25.09993416641268 0.5">
+        <geom name="obstacle298" type="box" size="0.1517829929899417 0.3415117342273746 0.5" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+    </body>
+
+
+
+
+
+
+    </worldbody>
+
+    <sensor>
+
+    </sensor>
+
+    <visual>
+        <global offwidth="800" offheight="600"/>
+        <quality shadowsize="2048"/>
+        <headlight ambient="0.3 0.3 0.3" diffuse="0.7 0.7 0.7" specular="0.1 0.1 0.1"/>
+        <map znear="0.01"/>
+        <scale forcewidth="0.01" contactwidth="0.05" contactheight="0.05" jointwidth="0.05" framelength="0.2" framewidth="0.02"/>
+        <rgba contactpoint="0 0.9 0 0.7" contactforce="0 0.5 0.3 0.1"/>
+    </visual>
+</mujoco>

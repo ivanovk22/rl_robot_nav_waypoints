@@ -81,6 +81,5 @@ class RewardCallback(BaseCallback):
             self.episode_lengths = []
             self.episode_results = []
             self.episode_time_lengths = []
-
         return True
 

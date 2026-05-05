@@ -65,24 +65,24 @@ class TanhActorCriticPolicy(BasePolicy):
     """
 
     def __init__(
-        self,
-        observation_space: gym.spaces.Space,
-        action_space: gym.spaces.Space,
-        lr_schedule: Schedule,
-        net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
-        activation_fn: Type[nn.Module] = nn.Tanh,
-        ortho_init: bool = True,
-        use_sde: bool = False,
-        log_std_init: float = 0.0,
-        full_std: bool = True,
-        use_expln: bool = False,
-        squash_output: bool = False,
-        features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
-        features_extractor_kwargs: Optional[Dict[str, Any]] = None,
-        share_features_extractor: bool = True,
-        normalize_images: bool = True,
-        optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
+            self,
+            observation_space: gym.spaces.Space,
+            action_space: gym.spaces.Space,
+            lr_schedule: Schedule,
+            net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
+            activation_fn: Type[nn.Module] = nn.Tanh,
+            ortho_init: bool = True,
+            use_sde: bool = False,
+            log_std_init: float = 0.0,
+            full_std: bool = True,
+            use_expln: bool = False,
+            squash_output: bool = False,
+            features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
+            features_extractor_kwargs: Optional[Dict[str, Any]] = None,
+            share_features_extractor: bool = True,
+            normalize_images: bool = True,
+            optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
+            optimizer_kwargs: Optional[Dict[str, Any]] = None,
     ):
         if optimizer_kwargs is None:
             optimizer_kwargs = {}
@@ -135,7 +135,8 @@ class TanhActorCriticPolicy(BasePolicy):
         self.log_std_init = log_std_init
         dist_kwargs = None
 
-        assert not (squash_output and not use_sde), "squash_output=True is only available when using gSDE (use_sde=True)"
+        assert not (
+                    squash_output and not use_sde), "squash_output=True is only available when using gSDE (use_sde=True)"
         # Keyword arguments for gSDE distribution
         if use_sde:
             dist_kwargs = {
@@ -183,7 +184,8 @@ class TanhActorCriticPolicy(BasePolicy):
 
         :param n_envs:
         """
-        assert isinstance(self.action_dist, StateDependentNoiseDistribution), "reset_noise() is only available when using gSDE"
+        assert isinstance(self.action_dist,
+                          StateDependentNoiseDistribution), "reset_noise() is only available when using gSDE"
         self.action_dist.sample_weights(self.log_std, batch_size=n_envs)
 
     def _build_mlp_extractor(self) -> None:
@@ -224,14 +226,15 @@ class TanhActorCriticPolicy(BasePolicy):
             action_net_layers = [nn.Linear(latent_dim_pi, self.action_space.shape[0]), nn.Tanh()]
             self.action_net = nn.Sequential(*action_net_layers)
             self.log_std = nn.Parameter(th.ones(self.action_space.shape[0]) * self.log_std_init, requires_grad=True)
-        elif isinstance(self.action_dist, (CategoricalDistribution, MultiCategoricalDistribution, BernoulliDistribution)):
+        elif isinstance(self.action_dist,
+                        (CategoricalDistribution, MultiCategoricalDistribution, BernoulliDistribution)):
             # For discrete distributions, we don't apply tanh
             self.action_net = self.action_dist.proba_distribution_net(latent_dim=latent_dim_pi)
         else:
             raise NotImplementedError(f"Unsupported distribution '{self.action_dist}'.")
 
         self.value_net = nn.Linear(self.mlp_extractor.latent_dim_vf, 1)
-        
+
         # Init weights: use orthogonal initialization
         # with small initial weight for the output
         if self.ortho_init:
@@ -278,7 +281,8 @@ class TanhActorCriticPolicy(BasePolicy):
         actions = actions.reshape((-1, *self.action_space.shape))
         return actions, values, log_prob
 
-    def extract_features(self, obs: th.Tensor, features_extractor: Optional[BaseFeaturesExtractor] = None) -> Union[th.Tensor, Tuple[th.Tensor, th.Tensor]]:
+    def extract_features(self, obs: th.Tensor, features_extractor: Optional[BaseFeaturesExtractor] = None) -> Union[
+        th.Tensor, Tuple[th.Tensor, th.Tensor]]:
         """
         Preprocess the observation if needed and extract features.
 
@@ -288,7 +292,8 @@ class TanhActorCriticPolicy(BasePolicy):
             features for the actor and the features for the critic.
         """
         if self.share_features_extractor:
-            return super().extract_features(obs, self.features_extractor if features_extractor is None else features_extractor)
+            return super().extract_features(obs,
+                                            self.features_extractor if features_extractor is None else features_extractor)
         else:
             if features_extractor is not None:
                 warnings.warn(
@@ -383,3 +388,149 @@ class TanhActorCriticPolicy(BasePolicy):
         features = super().extract_features(obs, self.vf_features_extractor)
         latent_vf = self.mlp_extractor.forward_critic(features)
         return self.value_net(latent_vf)
+
+
+# --- 1. Define the Custom Feature Extractor ---
+
+# class CombinedFeatureExtractor(BaseFeaturesExtractor):
+#     """
+#     Custom Feature Extractor that processes Lidar and Goal inputs separately
+#     and then fuses them.
+#
+#     Observation space MUST be a gymnasium.spaces.Box object where:
+#     - Index 0 to 179 are the Lidar readings (180 values)
+#     - Index 180 is the distance to goal
+#     - Index 181 is the angle to goal
+#
+#     Total observation size: 182
+#     """
+#
+#     def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 256):
+#         # We define the total output dimension of the extractor.
+#         super().__init__(observation_space, features_dim=features_dim)
+#
+#         # Assuming Lidar is the first 180 elements (0-179)
+#         # And Goal is the last 2 elements (180-181)
+#
+#         # --- Lidar Branch (180 inputs) ---
+#         # The Lidar data is high-dimensional, so we use a sequence of layers
+#         # for spatial feature extraction and dimensionality reduction.
+#         self.lidar_extractor = nn.Sequential(
+#             nn.Linear(180, 128),
+#             nn.ReLU(),
+#             nn.Linear(128, 64),
+#             nn.ReLU(),
+#         )
+#         lidar_output_dim = 64
+#
+#         # --- Goal Branch (2 inputs: distance, angle) ---
+#         # The goal data is low-dimensional but critically important, so we use
+#         # a smaller set of layers to process it.
+#         self.goal_extractor = nn.Sequential(
+#             nn.Linear(2, 64),
+#             nn.ReLU(),
+#             nn.Linear(64, 32),
+#             nn.ReLU(),
+#         )
+#         goal_output_dim = 32
+#
+#         # --- Fusion Layer ---
+#         # The final layer combines the outputs of the two branches (64 + 16 = 80)
+#         # and projects them up to the desired features_dim (256, set by the features_dim argument).
+#         combined_features_dim = lidar_output_dim + goal_output_dim
+#         self.fusion_layer = nn.Sequential(
+#             nn.Linear(combined_features_dim, features_dim),
+#             nn.ReLU()
+#         )
+#
+#     def forward(self, observations: th.Tensor) -> th.Tensor:
+#         """
+#         Splits the observation, processes each part, and fuses them.
+#         """
+#         # Ensure the tensor is float (standard practice)
+#         observations = observations.float()
+#
+#         # 1. Split the observations tensor
+#         # Lidar data (180 values)
+#         lidar_obs = observations[:, :180]
+#         # Goal data (2 values: dist, angle)
+#         goal_obs = observations[:, 180:]
+#
+#         # 2. Process each branch
+#         lidar_features = self.lidar_extractor(lidar_obs)
+#         goal_features = self.goal_extractor(goal_obs)
+#
+#         # 3. Fuse the features by concatenation
+#         fused_features = th.cat((lidar_features, goal_features), dim=1)
+#
+#         # 4. Final projection through the fusion layer
+#         return self.fusion_layer(fused_features)
+
+
+# --- 1. Define the Custom Feature Extractor ---
+class CombinedFeatureExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space: gym.spaces.Box, features_dim=256):
+        super().__init__(observation_space, features_dim)
+
+        # -------------------------
+        # LIDAR BRANCH
+        # -------------------------
+        self.lidar_extractor = nn.Sequential(
+            nn.Unflatten(1, (1, 180)),      # (B,1,180)
+
+            nn.Conv1d(1, 16, kernel_size=5, stride=2, padding=2),
+            nn.ReLU(),
+
+            nn.Conv1d(16, 32, kernel_size=5, stride=2, padding=2),
+            nn.ReLU(),
+
+            nn.Conv1d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+
+            nn.Flatten()
+        )
+
+        # compute size automatically
+        with th.no_grad():
+            sample = th.zeros(1, 180)
+            n_flatten = self.lidar_extractor(sample).shape[1]
+
+        self.lidar_fc = nn.Sequential(
+            nn.Linear(n_flatten, 128),
+            nn.ReLU()
+        )
+
+        # -------------------------
+        # GOAL BRANCH
+        # -------------------------
+        self.goal_extractor = nn.Sequential(
+            nn.Linear(2, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU()
+        )
+
+        # -------------------------
+        # FUSION
+        # -------------------------
+        self.fusion = nn.Sequential(
+            nn.Linear(128 + 64, 256),
+            nn.ReLU(),
+
+            nn.Linear(256, features_dim),
+            nn.ReLU()
+        )
+
+    def forward(self, obs):
+        obs = obs.float()
+
+        lidar = obs[:, :180]
+        goal = obs[:, 180:]
+
+        lidar_feat = self.lidar_fc(self.lidar_extractor(lidar))
+        goal_feat = self.goal_extractor(goal)
+
+        fused = th.cat([lidar_feat, goal_feat], dim=1)
+
+        return self.fusion(fused)
+

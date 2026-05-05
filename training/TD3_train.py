@@ -206,20 +206,6 @@ class CubeNavigationEnv(gym.Env):
             "cube_position": cube_pos,
             "sphere_position": sphere_pos
         }
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

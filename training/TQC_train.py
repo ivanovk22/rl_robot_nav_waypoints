@@ -92,7 +92,22 @@ class CubeNavigationEnv(gym.Env):
         
         tree = ET.parse(self.model_path)
         root = tree.getroot()
+        # Get the project root directory
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_file_dir)
+        assets_dir = os.path.join(project_root, "assets")
 
+        # Fix asset paths (same as before)
+        asset_element = root.find("asset")
+        if asset_element is not None:
+            for mesh in asset_element.findall("mesh"):
+                file_attr = mesh.get("file")
+                if file_attr:
+                    filename = os.path.basename(file_attr)
+                    correct_path = os.path.join(assets_dir, filename)
+                    if os.path.exists(correct_path):
+                        mesh.set("file", correct_path)
+                        print(f"✅ Updated mesh path: {correct_path}")
         cube_body = None
         for body in root.findall(".//body"):
             if body.get("name") == "cube_body":
@@ -207,17 +222,6 @@ class CubeNavigationEnv(gym.Env):
             "sphere_position": sphere_pos
         }
         
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -725,6 +729,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     name = args.run_id
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    name = os.path.join(base_dir, "models/", name)
 
     train = args.train
     if args.eval:
@@ -734,7 +740,7 @@ if __name__ == "__main__":
         train_tqc_agent(args.num_rays, args.model_path, args.num_envs, args.num_steps, args.run_id, training=True)
     
     # Load the last trained model
-    model = TQC.load(f"{args.run_id}")
+    model = TQC.load(f"{name}")
     
     # Create the evaluation environment
     eval_env = CubeNavigationEnv(
