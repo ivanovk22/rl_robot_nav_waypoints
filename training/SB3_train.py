@@ -28,7 +28,7 @@ from custom_callback import RewardCallback
 
 from envs.CubeNavigationEnv import CubeNavigationEnv_class
 
-from policies.custompolicy import TanhActorCriticPolicy, ImprovedFeatureExtractor
+# from policies.custompolicy import TanhActorCriticPolicy, ImprovedFeatureExtractor
 from policies.custompolicy import CombinedFeatureExtractor
 
 from stable_baselines3.common.callbacks import BaseCallback
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_envs", type=int, default=16, help="Number of parallel environments.")
     parser.add_argument("--train", action="store_true", help="Train the PPO agent.")
     parser.add_argument("--eval", action="store_true", help="Evaluate the PPO agent.")
-    parser.add_argument("--num_steps", type=int, default=200000, help="Number of training steps.")
+    parser.add_argument("--num_steps", type=int, default=50040, help="Number of training steps.")
     parser.add_argument("--run_id", type=str, default="TEST_lidarscnas", help="Run ID for TensorBoard logging.")
     parser.add_argument("--trainer", type=str, default="TQC", help="Trainer to use (PPO, SAC, TD3, TQC).")
     args = parser.parse_args()
@@ -352,8 +352,9 @@ if __name__ == "__main__":
     # print("Training flag:", vec_normalize.training)
 
     # Evaluate the trained agent
-    mean_reward, std_reward = evaluate_policy(model, vec_normalize, n_eval_episodes=10,
-                                              deterministic=True)  # , print_actions_means=True)
+    # mean_reward, std_reward = evaluate_policy(model, vec_normalize, n_eval_episodes=10,
+    #                                           deterministic=True)  # , print_actions_means=True)
     # print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
 
     eval_env.close()
+

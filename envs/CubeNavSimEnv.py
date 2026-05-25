@@ -333,11 +333,12 @@ class CubeSimulationEnv_class(gym.Env):
         """
         # cube_x = 16.06
         # cube_y = 22.66
-        cube_x = 17.617
+        cube_x = 17.62
         cube_y = 20.306
-        cube_yaw = np.pi
+        cube_yaw = np.pi/2
 
         self.waypoints = [
+            np.array([17.6, 22.3, 2.0]),
             np.array([14.956, 22.618, 2.0]),
             np.array([8.535, 22.633, 2.0]),
             np.array([1.503, 22.633, 2.0]),
@@ -356,6 +357,8 @@ class CubeSimulationEnv_class(gym.Env):
             np.array([17.593, 4.008, 2.0]),
             np.array([17.593, 12.719, 2.0]),
             np.array([17.617, 20.306, 2.0]),
+
+            # np.array([17.63, 20.06, 2.0])
         ]
 
 
@@ -1232,7 +1235,8 @@ class CubeSimulationEnv_class(gym.Env):
             y += linear_velocity * np.sin(theta) * dt
         self.x_positions.append(x)
         self.y_positions.append(y)
-        self.theta_positions.append(theta)
+        theta_to_plot = (theta + np.pi) % (2*np.pi) - np.pi # wrap it
+        self.theta_positions.append(theta_to_plot)
         self.lin_vel.append(linear_velocity)
         self.ang_vel.append(angular_velocity)
 
@@ -1276,7 +1280,6 @@ class CubeSimulationEnv_class(gym.Env):
 
         # Calculate reward and check termination conditions
         distance_to_sphere = info["distance_to_sphere"]
-
         MAX_DIST_STEP = 0.5  # tune (typical robot movement per step)
 
         reward += 2.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)

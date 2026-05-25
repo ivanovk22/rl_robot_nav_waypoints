@@ -119,6 +119,8 @@ class CubeNavigationEnv_class(gym.Env):
 
         self.episode_time_begin = 0
         self.relative_azimuth = 0
+        self.linear_velocity = 0.0
+        self.angular_velocity = 0.0
 
         self.action_space = gym.spaces.Box(
             low=np.array([0.0, -1.0], dtype=np.float32),
@@ -380,15 +382,13 @@ class CubeNavigationEnv_class(gym.Env):
         super().reset(seed=seed)
 
         # Reset step counter and return
-        info = self._get_info()
-
-
         self.current_step = 0
         self.episode_return = 0
-        self.previous_distance = 15
+        self.previous_distance = 30
         self.stuck_counter = 0
+        self.linear_velocity = 0.0
+        self.angular_velocity = 0.0
 
-        self.prev_angular_velocity = 0
         # Define arena boundaries with buffer
 
         """The space is 15x15"""
@@ -445,6 +445,7 @@ class CubeNavigationEnv_class(gym.Env):
         # Get observation and info
         observation = self._get_obs()
         info = self._get_info()
+        self.previous_distance = info["distance_to_sphere"]
 
         return observation, info
 
@@ -1230,21 +1231,42 @@ class CubeNavigationEnv_class(gym.Env):
                 self.model.body_pos[obstacle_body_id, :2] = [x, y]
 
     def step(self, action):
-        # time.sleep(0.1)
-        self.episode_time_length
         # Movement parameters
-        move_max_linspeed = 0.25
+        move_max_linspeed = 0.4
         max_ang_speed = 1
         # Apply action
-        linear_velocity = action[0] * move_max_linspeed
-        angular_velocity = action[1] * max_ang_speed
+        target_linear_velocity = float(action[0]) * move_max_linspeed
+        target_angular_velocity = float(action[1]) * max_ang_speed
 
-        # Triangular constrain
-        allowed_ang_vel = max_ang_speed * (1 - linear_velocity / move_max_linspeed)
-        angular_velocity = np.clip(angular_velocity, -allowed_ang_vel, allowed_ang_vel)
+        alpha_v = 0.15  # linear response
+        alpha_w = 0.15  # angular response
+        # store previous velocities for smoothness reward
+        prev_lin_vel = self.linear_velocity
+        prev_ang_vel = self.angular_velocity
 
-        allowed_lin_vel = move_max_linspeed * (1 - abs(angular_velocity) / max_ang_speed)
-        linear_velocity = np.clip(linear_velocity, 0.0, allowed_lin_vel)
+        self.linear_velocity += alpha_v * (
+                target_linear_velocity - self.linear_velocity
+        )
+
+        self.angular_velocity += alpha_w * (
+                target_angular_velocity - self.angular_velocity
+        )
+
+        allowed_ang_vel = max_ang_speed * (1.0 - abs(self.linear_velocity) / move_max_linspeed)
+
+        allowed_ang_vel = max(0.0, allowed_ang_vel)
+
+        self.angular_velocity = np.clip(self.angular_velocity, -allowed_ang_vel, allowed_ang_vel)
+
+        allowed_lin_vel = move_max_linspeed * (1.0 - abs(self.angular_velocity) / max_ang_speed)
+
+        allowed_lin_vel = max(0.0, allowed_lin_vel)
+
+        self.linear_velocity = np.clip(self.linear_velocity,0.0,allowed_lin_vel)
+
+        linear_velocity = self.linear_velocity
+        angular_velocity = self.angular_velocity
+
 
         # Get current position and orientation
         x, y, theta = self.data.qpos[:3]
@@ -1274,6 +1296,8 @@ class CubeNavigationEnv_class(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
         reward = 0.0
+        reward_components = {}
+
         # Check for collision with obstacles
         contact_with_obstacles = False
         contact_with_sphere = False
@@ -1298,57 +1322,69 @@ class CubeNavigationEnv_class(gym.Env):
 
         # Calculate reward and check termination conditions
         distance_to_sphere = info["distance_to_sphere"]
-
-        # reward += 5.0 * (self.previous_distance - distance_to_sphere)
-        # # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
-        # min_lidar_reading = np.min(self.lidar_readings[1:]) if len(self.lidar_readings) > 1 else np.inf
-        # ESCAPE_THRESHOLD = 0.3  # Meters: Distance threshold for "immediate danger"
-        #
-        # # 3. CONDITIONAL ANGULAR PENALTY
-        # # If the robot is far from obstacles, penalize misalignment with the goal (-0.15).
-        # # If the robot is stuck (close to obstacles), the penalty is 0, incentivizing a full turn.
-        # if min_lidar_reading > ESCAPE_THRESHOLD:
-        #     reward += -0.15 * abs(self.relative_azimuth)
-        # action_magnitude = np.sqrt(action[0] ** 2 + action[1] ** 2)
-        # reward += -0.05 * action_magnitude
-
         MAX_DIST_STEP = 0.5  # tune (typical robot movement per step)
 
-        reward += 1.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)
-        # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
+        r_progress = 2.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)
+        reward += r_progress
+        reward_components["progress"] = r_progress
 
-        reward += -0.5 * (abs(self.relative_azimuth) / np.pi)
+        # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
+        r_angle = -0.3 * (abs(self.relative_azimuth) / np.pi)
+        reward += r_angle
+        reward_components["angle"] = r_angle
         # Negative reward as time passes, we want to reach the goal faster without stucking somewhere.
         # I hope that this will make the robot move if he is stuck
-        reward -= 0.1
+
+        r_time = -0.05 # Time penalty
+        reward += r_time
+        reward_components["time"] = r_time
+
+        # ACTION SMOOTHNESS
+        r_action = -0.03 * (action[0] ** 2 + action[1] ** 2)
+        reward += r_action
+        reward_components["action"] = r_action
 
 
-        # For more smooth turns and less jerks
-        # ang_acc = angular_velocity - self.prev_angular_velocity
-        # reward += -0.2 * (ang_acc ** 2)
-        # self.prev_angular_velocity = angular_velocity
-        action_penalty = 0.05 * (action[0] ** 2 + action[1] ** 2)
-        reward -= action_penalty
+        lin_change = abs(linear_velocity - prev_lin_vel)
+        ang_change = abs(angular_velocity - prev_ang_vel)
+        # reward -= 0.40 * lin_change
+        # reward -= 0.15 * ang_change
+        # reward -= 0.02 * abs(angular_velocity)
+
+        # -------------------------
+        # VELOCITY SMOOTHNESS
+        # -------------------------
+        r_smooth = -0.40 * lin_change - 0.15 * ang_change
+        reward += r_smooth
+        reward_components["smoothness"] = r_smooth
+
+        reward += -0.02 * abs(angular_velocity)
+        reward_components["angular_bias"] = -0.02 * abs(angular_velocity)
+
 
         # Terminal conditions
         terminated = False
         truncated = False
 
-
+        # LIDAR PENALTY
+        r_lidar = 0.0
         too_close_to_obstacles = False
         for i in range(1, len(self.lidar_readings)):
             if self.lidar_readings[i] < 0.32 and self.lidar_readings[i] > 0.07:
-                # reward += -0.1 / self.lidar_readings[i]
                 d = self.lidar_readings[i]
-                reward += -0.5 * np.exp(-d / 0.2)
+                r_lidar = -0.5 * np.exp(-d / 0.2)
             elif self.lidar_readings[i] <= 0.15:
                 too_close_to_obstacles = True
                 break
+        reward += r_lidar
+        reward_components["lidar"] = r_lidar
         self.episode_return += reward
 
 
         if contact_with_obstacles or too_close_to_obstacles:
-            reward += -5.0
+            r_collision = -15.0
+            reward += r_collision
+            reward_components["collision"] = r_collision
             self.episode_return += reward
             self.last_episode_result = "collision"
             info["steps_taken"] = self.current_step
@@ -1357,8 +1393,9 @@ class CubeNavigationEnv_class(gym.Env):
 
         # elif distance_to_sphere < 0.3 or contact_with_sphere:
         elif distance_to_sphere < 2.0 or contact_with_sphere:
-
-            reward += 10
+            r_success = 25.0
+            reward += r_success
+            reward_components["success"] = r_success
             self.episode_return += reward
             self.last_episode_result = "success"
             info["steps_taken"] = self.current_step
@@ -1374,7 +1411,7 @@ class CubeNavigationEnv_class(gym.Env):
         self.previous_distance = distance_to_sphere
 
         info["episode_result"] = self.last_episode_result
-
+        info["reward_components"] = reward_components
         # Render if needed
         if self.render_mode == "human":
             self.render()

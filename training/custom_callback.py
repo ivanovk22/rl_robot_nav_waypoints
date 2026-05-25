@@ -1,4 +1,5 @@
 from stable_baselines3.common.callbacks import CheckpointCallback, BaseCallback
+import numpy as np
 
 class RewardCallback(BaseCallback):
     def __init__(self, verbose=0):
@@ -16,27 +17,70 @@ class RewardCallback(BaseCallback):
         self.timeout_count = 0
         self.total_episodes = 0
 
+        # NEW: reward components tracking
+        self.episode_reward_components = {}
+        self.current_episode_rc = None
+
     def _on_training_start(self) -> None:
         n_envs = self.training_env.num_envs
         self.current_episode_rewards = [0.0] * n_envs
         self.current_episode_lengths = [0] * n_envs
+        # NEW: per-env reward component accumulator
+        self.current_episode_rc = [dict() for _ in range(n_envs)]
 
     def _on_step(self) -> bool:
         dones = self.locals['dones']
         rewards = self.locals['rewards']
         infos = self.locals['infos']
 
+
         for i, done in enumerate(dones):
             self.current_episode_rewards[i] += rewards[i]
             self.current_episode_lengths[i] += 1
 
+            # NEW: store reward components if available
+            if "reward_components" in infos[i]:
+                rc = infos[i]["reward_components"]
+
+                for k, v in rc.items():
+                    # print(f'{k}:{v}')
+                    # print(self.current_episode_rc[i])
+                    if k not in self.current_episode_rc[i]:
+                        self.current_episode_rc[i][k] = 0.0
+                    self.current_episode_rc[i][k] += v
+                    # print(self.current_episode_rc[i])
+            # print('--------------')
+            # if not done:
+            #     # sum the different rewards and then print them to check the contributions
+            #     # print(infos[i]["reward_components"])
+            #     # print('here:', self.current_episode_rc[i])
+
             if done:
+                # print('--------------DONE--------------')
+                # print('here:', self.current_episode_rc[i])
+
                 self.episode_rewards.append(self.current_episode_rewards[i])
                 self.episode_lengths.append(self.current_episode_lengths[i])
+                # print('reward:', self.episode_rewards)
+
+                # store final episode aggregated reward components
+                for k, v in self.current_episode_rc[i].items():
+                    if k not in self.episode_reward_components:
+                        self.episode_reward_components[k] = []
+                    self.episode_reward_components[k].append(v)
+                # print(self.episode_reward_components)
+                # exit(0)
+
+                # reset per-env accumulator
+                self.current_episode_rc[i] = {}
                 
                 # Extract episode result from info
                 if 'episode_result' in infos[i]:
                     result = infos[i]['episode_result']
+                    # print('-----------result----------------', result)
+                    # print(self.episode_reward_components)
+                    # print(self.current_episode_rewards)
+
                     self.episode_results.append(result)
                     
                     # Update counters based on episode result
@@ -75,6 +119,18 @@ class RewardCallback(BaseCallback):
             self.logger.record('metrics/success_rate', success_rate)
             self.logger.record('metrics/collision_rate', collision_rate)
             self.logger.record('metrics/timeout_rate', timeout_rate)
+
+            # NEW: reward component stats
+            for k, vals in self.episode_reward_components.items():
+                if len(vals) > 0:
+                    self.logger.record(
+                        f"reward_components/{k}_mean",
+                        float(np.mean(vals))
+                    )
+                    self.logger.record(
+                        f"reward_components/{k}_std",
+                        float(np.std(vals))
+                    )
             
             # Reset counters for the next logging interval
             self.episode_rewards = []

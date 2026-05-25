@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 
 from stable_baselines3.common import type_aliases
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecMonitor, is_vecenv_wrapped
+
 def evaluate_with_info(model: "type_aliases.PolicyPredictor",
     env: Union[gym.Env, VecEnv],
     n_eval_episodes: int = 10,
@@ -184,32 +185,37 @@ if __name__ == "__main__":
     # Evaluate the trained agent
     mean_reward, std_reward, info = evaluate_with_info(model, vec_normalize, n_eval_episodes=1,
                                               deterministic=True)  # , print_actions_means=True)
+
     eval_env.close()
 
     print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
 
-    t = np.arange(len(info["x_positions"]))
+    t = np.arange(len(info["x_positions"])) * 0.1
 
     fig, axs = plt.subplots(5, 1, figsize=(15, 8), sharex=True)
 
     # X position
     axs[0].plot(t, info["x_positions"], linewidth=2)
     axs[0].set_ylabel("x [m]")
+    axs[0].set_xlabel("$t$ (s)")
     axs[0].set_title("X Position")
     axs[0].grid(True)
 
     # Y position
     axs[1].plot(t, info["y_positions"], linewidth=2)
     axs[1].set_ylabel("y [m]")
+    axs[1].set_xlabel("$t$ (s)")
     axs[1].set_title("Y Position")
     axs[1].grid(True)
 
     # Theta
     axs[2].plot(t, info["theta_positions"], linewidth=2)
     axs[2].set_ylabel("theta [rad]")
-    axs[2].set_xlabel("Step")
+    axs[2].set_xlabel("$t$ (s)")
     axs[2].set_title("Orientation")
     axs[2].grid(True)
+
+
 
     # Linear velocity
     axs[3].plot(t, info["lin_vel"], linewidth=2)
@@ -218,14 +224,17 @@ if __name__ == "__main__":
     axs[3].set_title("Linear velocity")
     axs[3].grid(True)
 
-    # Linear velocity
+    # Angular velocity
     axs[4].plot(t, info["ang_vel"], linewidth=2)
     axs[4].set_ylabel("Ang Velocity [m/s]")
     axs[4].set_xlabel("Step")
     axs[4].set_title("Angular velocity")
     axs[4].grid(True)
 
+    for ax in axs:
+        ax.tick_params(labelbottom=True)
+
     plt.tight_layout()
-    # plt.savefig("trajectory_plot_new_reward_velocities_new_network.png", dpi=300, bbox_inches="tight")
+    plt.savefig("traj_plot_new_NN_new_reward.png", dpi=300, bbox_inches="tight")
     plt.close()
 
