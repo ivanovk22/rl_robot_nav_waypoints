@@ -86,49 +86,17 @@
             <geom name="obstacle9" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
         </body>
 
-<!--        <body name="obstacle10" pos="9 0 1">-->
-<!--            <geom name="obstacle10" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
+        <body name="obstacle10" pos="9 0 1">
+            <geom name="obstacle10" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+        </body>
 
-<!--        <body name="obstacle11" pos="10 2 1">-->
-<!--            <geom name="obstacle11" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
+        <body name="obstacle11" pos="10 2 1">
+            <geom name="obstacle11" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+        </body>
 
-<!--        <body name="obstacle12" pos="10 -2 1">-->
-<!--            <geom name="obstacle12" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle13" pos="10 5 1">-->
-<!--            <geom name="obstacle13" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle14" pos="10 7 1">-->
-<!--            <geom name="obstacle14" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle15" pos="10 9 1">-->
-<!--            <geom name="obstacle15" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle16" pos="10 11 1">-->
-<!--            <geom name="obstacle16" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle17" pos="10 13 1">-->
-<!--            <geom name="obstacle17" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle18" pos="10 15 1">-->
-<!--            <geom name="obstacle18" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle19" pos="10 17 1">-->
-<!--            <geom name="obstacle19" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
-
-<!--        <body name="obstacle20" pos="10 19 1">-->
-<!--            <geom name="obstacle20" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>-->
-<!--        </body>-->
+        <body name="obstacle12" pos="10 -2 1">
+            <geom name="obstacle12" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
+        </body>
 
     </worldbody>
     

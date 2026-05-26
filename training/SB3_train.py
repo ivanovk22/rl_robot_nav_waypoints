@@ -1,38 +1,19 @@
 import os, sys
-
-# Add the project root directory to Python path
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_file_dir)  # Go up one level from training/ to CubeNav-RL/
 sys.path.insert(0, project_root)
-
-import numpy as np
-import math
-import time
-import gymnasium as gym
-from gymnasium import spaces
-from stable_baselines3 import PPO, SAC, TD3
 from sb3_contrib import TQC
-
-from stable_baselines3.common.callbacks import CheckpointCallback, BaseCallback
+from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from stable_baselines3.common.monitor import Monitor
-
 import argparse
-import xml.etree.ElementTree as ET
-import os
-import torch
-from torch.utils.tensorboard import SummaryWriter
-
 from custom_callback import RewardCallback
-
 from envs.CubeNavigationEnv import CubeNavigationEnv_class
-
-# from policies.custompolicy import TanhActorCriticPolicy, ImprovedFeatureExtractor
 from policies.custompolicy import CombinedFeatureExtractor
-
 from stable_baselines3.common.callbacks import BaseCallback
-import signal, threading
+import signal
+
 
 INTERRUPTED = False
 print_one = 0
@@ -107,7 +88,6 @@ def make_env(num_rays, model_path="xml_models/obstacles_cube_model.xml", trainin
             training_mode=training
         )
         return env
-
     return _init
 
 
@@ -129,20 +109,9 @@ def train_agent(num_rays, model_path="xml_models/obstacles_cube_model.xml", num_
     else:
         # Create vectorized environment
         env = SubprocVecEnv([make_env(num_rays, model_path, training=training) for _ in range(num_envs)])
-        # env = DummyVecEnv([make_env(num_rays, model_path, training=training)])
 
         env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0)
 
-    # print('----------ENVIRONMENT--------------\n', env)
-    # print("Obs mean:", env.obs_rms.mean)
-    # print("Obs var:", env.obs_rms.var)
-    # print("Reward mean:", env.ret_rms.mean)
-    # print("Reward var:", env.ret_rms.var)
-
-    # policy_kwargs = dict(
-    #     net_arch=[128, 128],
-    #     log_std_init=-2.0,
-    # )
     policy_kwargs = dict(
         features_extractor_class=CombinedFeatureExtractor,
         # features_extractor_kwargs=dict(features_dim=256), # Optional, using default 256
@@ -150,78 +119,21 @@ def train_agent(num_rays, model_path="xml_models/obstacles_cube_model.xml", num_
         net_arch=dict(pi=[128, 128], qf=[128, 128])
     )
 
-    # Create PPO model with built-in logging
-    if trainer == "PPO":
-        model = PPO(
-            TanhActorCriticPolicy,  # Custom policy class
-            env,
-            verbose=1,  # This enables built-in logging
-            tensorboard_log=log_dir,
-            device="cpu",
-            learning_rate=0.0003,
-            n_steps=500,
-            batch_size=128,
-            n_epochs=6,
-            gamma=0.99,
-            gae_lambda=0.98,
-            clip_range=0.3,
-            ent_coef=0.005,
-            policy_kwargs=policy_kwargs
-        )
-    elif trainer == "SAC":
-        model = SAC(
-            "MlpPolicy",
-            env,
-            verbose=1,
-            tensorboard_log=log_dir,
-            device="cpu",
-            learning_rate=0.0001,  # Kept same
-            buffer_size=1000000,  # Kept same
-            learning_starts=5000,  # Increased from 1000
-            batch_size=512,  # Increased from 256
-            tau=0.01,  # Increased from 0.005
-            gamma=0.99,  # Kept same
-            train_freq=1,  # Kept same
-            gradient_steps=1,  # Kept same
-            ent_coef="auto",  # Kept same
-            policy_kwargs=policy_kwargs
-        )
-    elif trainer == "TD3":
-        model = TD3(
-            "MlpPolicy",
-            env,
-            verbose=1,
-            tensorboard_log=log_dir,
-            device="cpu",
-            learning_rate=0.0003,  # Reduced from 0.001
-            buffer_size=1000000,  # Kept same
-            learning_starts=20000,
-            batch_size=512,  # Reduced from 256
-            tau=0.005,  # Kept same
-            gamma=0.98,  # Slightly reduced from 0.99
-            # train_freq=(num_envs*100, "step"),    # Explicit step/epoch setting
-            policy_kwargs=dict(
-                net_arch=[256, 256],
-                # noise_std=0.2,
-                # noise_clip=0.5
-            )
-        )
-    elif trainer == "TQC":
-        model = TQC(
-            "MlpPolicy",
-            env,
-            verbose=1,
-            tensorboard_log=log_dir,
-            device="cpu",
-            learning_rate=0.0003,  # Balanced learning rate
-            batch_size=512,  # Larger batch for stability
-            gamma=0.98,  # Good for mid-horizon tasks
-            tau=0.005,  # Default target update rate
-            ent_coef="auto_0.1",  # Adaptive entropy coefficient
-            # n_quantiles=25,            # Default quantile count
-            # top_quantiles_to_drop=2,   # Default truncation
-            policy_kwargs=policy_kwargs
-        )
+
+
+    model = TQC(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        tensorboard_log=log_dir,
+        device="cpu",
+        learning_rate=0.0003,  # Balanced learning rate
+        batch_size=512,  # Larger batch for stability
+        gamma=0.98,  # Good for mid-horizon tasks
+        tau=0.005,  # Default target update rate
+        ent_coef="auto_0.1",  # Adaptive entropy coefficient
+        policy_kwargs=policy_kwargs
+    )
 
     # Only keep necessary callbacks
     checkpoint_callback = CheckpointCallback(
@@ -264,10 +176,7 @@ def train_agent(num_rays, model_path="xml_models/obstacles_cube_model.xml", num_
         print(f"\n✅ Interrupted: model saved to {interrupted_path}")
 
     print('----------ENVIRONMENT after training--------------\n', env)
-    # print("Obs mean:", env.obs_rms.mean)
-    # print("Obs var:", env.obs_rms.var)
-    # print("Reward mean:", env.ret_rms.mean)
-    # print("Reward var:", env.ret_rms.var)
+
     # Save the final model
     model.save(f"models/{run_id}")
     env.save(os.path.join(log_dir, f"{run_id}.pkl"))
@@ -287,10 +196,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_rays", type=int, default=180, help="Number of LiDAR rays around the sphere.")
     parser.add_argument("--model_path", type=str, default="xml_models/obstacles_cube_model.xml",
                         help="Path to the MuJoCo model XML file.")
-    parser.add_argument("--num_envs", type=int, default=16, help="Number of parallel environments.")
+    parser.add_argument("--num_envs", type=int, default=1, help="Number of parallel environments.")
     parser.add_argument("--train", action="store_true", help="Train the PPO agent.")
     parser.add_argument("--eval", action="store_true", help="Evaluate the PPO agent.")
-    parser.add_argument("--num_steps", type=int, default=50040, help="Number of training steps.")
+    parser.add_argument("--num_steps", type=int, default=200, help="Number of training steps.")
     parser.add_argument("--run_id", type=str, default="TEST_lidarscnas", help="Run ID for TensorBoard logging.")
     parser.add_argument("--trainer", type=str, default="TQC", help="Trainer to use (PPO, SAC, TD3, TQC).")
     args = parser.parse_args()
@@ -303,22 +212,12 @@ if __name__ == "__main__":
     if train:
         train_agent(args.num_rays, args.model_path, args.num_envs, args.num_steps, args.run_id, training=True,
                     trainer=args.trainer)
-    # print('training finished')
     base_dir = os.path.dirname(os.path.dirname(__file__))
     name = os.path.join(base_dir, "models/", name)
-    # print(name)
-    # print(base_dir)
+
 
     # Load the last trained model with the correct algorithm class
-    if args.trainer == "PPO":
-        model = PPO.load(f"{name}")
-    elif args.trainer == "SAC":
-        model = SAC.load(f"{name}")
-    elif args.trainer == "TD3":
-        model = TD3.load(f"{name}")
-    elif args.trainer == "TQC":
-        model = TQC.load(f"{name}")
-    # print("MODEL:", model)
+    model = TQC.load(f"{name}")
 
     eval_env = DummyVecEnv([lambda: Monitor(CubeNavigationEnv_class(
         num_rays=args.num_rays,
@@ -327,9 +226,6 @@ if __name__ == "__main__":
         training_mode=False
     ))])
 
-    # Debug: Print observation space shapes
-    # print(f"Current observation space shape: {eval_env.observation_space.shape}")
-    # print("PATH:", os.path.join(base_dir, "TENSORBOARD/", f"{args.run_id}.pkl"))
     # Try to load normalization, but handle shape mismatch
     try:
         if os.path.exists(os.path.join(base_dir, "TENSORBOARD/", f"{args.run_id}.pkl")):
@@ -345,16 +241,11 @@ if __name__ == "__main__":
         print(f"Shape mismatch error: {e}")
         print("Using environment without normalization")
     print('----------ENVIRONMENT eval--------------\n', eval_env)
-    # print("Obs mean:", vec_normalize.obs_rms.mean)
-    # print("Obs var:", vec_normalize.obs_rms.var)
-    # print("Reward mean:", vec_normalize.ret_rms.mean)
-    # print("Reward var:", vec_normalize.ret_rms.var)
-    # print("Training flag:", vec_normalize.training)
 
     # Evaluate the trained agent
-    # mean_reward, std_reward = evaluate_policy(model, vec_normalize, n_eval_episodes=10,
-    #                                           deterministic=True)  # , print_actions_means=True)
-    # print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
+    mean_reward, std_reward = evaluate_policy(model, vec_normalize, n_eval_episodes=20,
+                                              deterministic=True)  # , print_actions_means=True)
+    print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
 
     eval_env.close()
 

@@ -164,9 +164,6 @@ class CubeNavigationEnv_class(gym.Env):
         # Reset the environment
         self.reset()
 
-
-
-
     def _load_and_modify_xml_model(self):
         """Load and modify the XML model with proper asset path resolution."""
         if not os.path.exists(self.model_path):
@@ -217,7 +214,7 @@ class CubeNavigationEnv_class(gym.Env):
 
             # Make the rays 180°facing front
             # here "+ np.pi*3/2" moves the scans starting from 270 deg to 90 deg (CCW)
-            angle = np.pi * i / self.num_rays + np.pi*3/2
+            angle = np.pi * i / self.num_rays + np.pi * 3 / 2
 
             cos_angle = np.cos(angle)
 
@@ -262,15 +259,13 @@ class CubeNavigationEnv_class(gym.Env):
         """
         noise = 0.02
 
-        self.lidar_readings = self.lidar_readings + np.random.normal(0, noise*self.lidar_readings)
+        self.lidar_readings = self.lidar_readings + np.random.normal(0, noise * self.lidar_readings)
         self.lidar_readings = np.clip(self.lidar_readings, 0, 30)
 
         # # Get the reading's indices which are not full scale
         # not_full_idx = np.where(self.lidar_readings < 30)[0]
         # indices = np.random.choice(len(not_full_idx), size=int(len(self.lidar_readings)/20), replace=False) # to replace
         # self.lidar_readings[not_full_idx[indices]] = 30
-
-
 
         # Get positions
         cube_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "cube_body")
@@ -313,7 +308,6 @@ class CubeNavigationEnv_class(gym.Env):
         obs = np.concatenate([self.lidar_readings, [distance, self.relative_azimuth]])
         # obs = np.array([distance, self.relative_azimuth])
 
-
         return obs.astype(np.float32)
 
     def _get_info(self):
@@ -346,8 +340,6 @@ class CubeNavigationEnv_class(gym.Env):
             "cube_position": cube_pos,
             "sphere_position": sphere_pos
         }
-
-
 
     def reset(self, seed=None, options=None):
         # --- (Episode Stats Update Code remains unchanged) ---
@@ -384,7 +376,6 @@ class CubeNavigationEnv_class(gym.Env):
         # Reset step counter and return
         self.current_step = 0
         self.episode_return = 0
-        self.previous_distance = 30
         self.stuck_counter = 0
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
@@ -412,7 +403,7 @@ class CubeNavigationEnv_class(gym.Env):
                 gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle{i}")
                 self.model.geom_size[gid, :2] = [0.1, 0.1]
 
-        # CONFIGURATION = ["single_angle", "empty"]
+
         CONFIGURATION = ["door", "single_angle", "two_angles", "obstacles", "empty"]
         cube_yaw = np.random.uniform(-np.pi, np.pi)
 
@@ -428,7 +419,6 @@ class CubeNavigationEnv_class(gym.Env):
             cube_x, cube_y, sphere_x, sphere_y = self._obstacles()
         else:
             cube_x, cube_y, sphere_x, sphere_y = self._empty()
-
 
         # Set cube and sphere positions
         self.data.qpos[:3] = [cube_x, cube_y, cube_yaw]
@@ -448,6 +438,192 @@ class CubeNavigationEnv_class(gym.Env):
         self.previous_distance = info["distance_to_sphere"]
 
         return observation, info
+
+    def step(self, action):
+        # Movement parameters
+        move_max_linspeed = 0.4
+        max_ang_speed = 1
+        # Apply action
+        target_linear_velocity = float(action[0]) * move_max_linspeed
+        target_angular_velocity = float(action[1]) * max_ang_speed
+
+        alpha_v = 0.15  # linear response
+        alpha_w = 0.15  # angular response
+        # store previous velocities for smoothness reward
+        prev_lin_vel = self.linear_velocity
+        prev_ang_vel = self.angular_velocity
+
+        self.linear_velocity += alpha_v * (
+                target_linear_velocity - self.linear_velocity
+        )
+
+        self.angular_velocity += alpha_w * (
+                target_angular_velocity - self.angular_velocity
+        )
+
+        allowed_ang_vel = max_ang_speed * (1.0 - abs(self.linear_velocity) / move_max_linspeed)
+
+        allowed_ang_vel = max(0.0, allowed_ang_vel)
+
+        self.angular_velocity = np.clip(self.angular_velocity, -allowed_ang_vel, allowed_ang_vel)
+
+        allowed_lin_vel = move_max_linspeed * (1.0 - abs(self.angular_velocity) / max_ang_speed)
+
+        allowed_lin_vel = max(0.0, allowed_lin_vel)
+
+        self.linear_velocity = np.clip(self.linear_velocity, 0.0, allowed_lin_vel)
+
+        linear_velocity = self.linear_velocity
+        angular_velocity = self.angular_velocity
+
+        # Get current position and orientation
+        x, y, theta = self.data.qpos[:3]
+        dt = self.model.opt.timestep  # 0.1 [s/step]
+        if (np.abs(angular_velocity) > 1e-3):
+            deltax = (linear_velocity / angular_velocity) * (np.sin(theta + angular_velocity * dt) - np.sin(theta))
+            deltay = (linear_velocity / angular_velocity) * (-np.cos(theta + angular_velocity * dt) + np.cos(theta))
+            x += deltax
+            y += deltay
+            theta += angular_velocity * dt
+        else:
+            # Updating position
+            x += linear_velocity * np.cos(theta) * dt
+            y += linear_velocity * np.sin(theta) * dt
+
+        # Set position and orientation
+        self.data.qpos[:3] = [x, y, theta]
+
+        # Step simulation
+        mujoco.mj_step(self.model, self.data)
+        self.current_step += 1
+
+        # Update simulation state
+        mujoco.mj_forward(self.model, self.data)
+
+        # Get observation and info
+        observation = self._get_obs()
+        info = self._get_info()
+        reward = 0.0
+        reward_components = {}
+        # Check for collision with obstacles
+        contact_with_obstacles = False
+        contact_with_sphere = False
+
+        cube_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "cube")
+        for i in range(self.data.ncon):
+            contact = self.data.contact[i]
+            geom1_id = contact.geom1
+            geom2_id = contact.geom2
+
+            if geom1_id == cube_geom_id or geom2_id == cube_geom_id:
+                other_geom_id = geom2_id if geom1_id == cube_geom_id else geom1_id
+                other_geom_name = mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_GEOM, other_geom_id)
+
+                if (other_geom_name and "wall" in other_geom_name) or (
+                        other_geom_name and "obstacle" in other_geom_name):
+                    contact_with_obstacles = True
+                    break
+                elif other_geom_name and "sphere" in other_geom_name:
+                    contact_with_sphere = True
+                    break
+
+        # Calculate reward and check termination conditions
+        distance_to_sphere = info["distance_to_sphere"]
+
+        MAX_DIST_STEP = 0.25  # tune (typical robot movement per step)
+
+        r_progress = 2.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)
+        reward += r_progress
+        reward_components["progress"] = r_progress
+
+        # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
+        r_angle = -0.3 * (abs(self.relative_azimuth) / np.pi)
+        reward += r_angle
+        reward_components["angle"] = r_angle
+        # Negative reward as time passes, we want to reach the goal faster without stucking somewhere.
+        # I hope that this will make the robot move if he is stuck
+
+        r_time = -0.05  # Time penalty
+        reward += r_time
+        reward_components["time"] = r_time
+
+        # ACTION SMOOTHNESS
+        r_action = -0.03 * (action[0] ** 2 + action[1] ** 2)
+        reward += r_action
+        reward_components["action"] = r_action
+
+        lin_change = abs(linear_velocity - prev_lin_vel)
+        ang_change = abs(angular_velocity - prev_ang_vel)
+        r_smooth = -0.40 * lin_change - 0.15 * ang_change
+        reward += r_smooth
+        reward_components["smoothness"] = r_smooth
+
+        reward += -0.02 * abs(angular_velocity)
+        reward_components["angular_bias"] = -0.02 * abs(angular_velocity)
+
+        # Terminal conditions
+        terminated = False
+        truncated = False
+
+        # LIDAR PENALTY
+        r_lidar = 0
+        too_close_to_obstacles = False
+        d_min = 1
+        for i in range(1, len(self.lidar_readings)):
+            if self.lidar_readings[i] < 0.8 and self.lidar_readings[i] > 0.2:
+                d = self.lidar_readings[i]
+                if d_min > d:
+                    d_min = d
+            elif self.lidar_readings[i] <= 0.2:
+                too_close_to_obstacles = True
+                break
+        if d_min != 1:
+            d_norm = np.clip(d_min / 0.8, 0.0, 1.0)
+            r_lidar = -10.0 * (1.0 - d_norm)
+        reward += r_lidar
+        reward_components["lidar"] = r_lidar
+        self.episode_return += reward
+
+        # if distance_to_sphere < 0.5:
+        #     print(f"distance to goal: {distance_to_sphere}")
+
+        if contact_with_obstacles or too_close_to_obstacles:
+            r_collision = -50.0
+            reward += r_collision
+            reward_components["collision"] = r_collision
+            self.episode_return += reward
+            self.last_episode_result = "collision"
+            info["steps_taken"] = self.current_step
+            info["episode_time_length"] = time.time() - self.episode_time_begin
+            terminated = True
+
+        elif distance_to_sphere < 2.0 or contact_with_sphere:
+
+            r_success = 20.0
+            reward += r_success
+            reward_components["success"] = r_success
+
+            self.episode_return += reward
+            self.last_episode_result = "success"
+            info["steps_taken"] = self.current_step
+            info["episode_time_length"] = time.time() - self.episode_time_begin
+            terminated = True
+
+        elif self.current_step >= self.max_episode_steps:
+            self.last_episode_result = "timeout"
+            info["steps_taken"] = self.current_step
+            info["episode_time_length"] = time.time() - self.episode_time_begin
+            truncated = True
+
+        self.previous_distance = distance_to_sphere
+
+        info["episode_result"] = self.last_episode_result
+        info["reward_components"] = reward_components
+
+        # Render if needed
+        if self.render_mode == "human":
+            self.render()
+        return observation, reward, terminated, truncated, info
 
     def _find_valid_sphere_position(self, cube_x, cube_y, min_x, max_x, min_y, max_y, min_separation):
         """Find a valid position for the sphere that maintains minimum separation from cube."""
@@ -479,7 +655,6 @@ class CubeNavigationEnv_class(gym.Env):
             cube_x, cube_y, min_x + 1, max_x - 1, min_y + 1, max_y - 1, 5
         )
         return cube_x, cube_y, sphere_x, sphere_y
-
 
     def _obstacles(self):
         wall_buffer = 0.2
@@ -515,7 +690,7 @@ class CubeNavigationEnv_class(gym.Env):
         # 3. Place obstacles with checks against both cube and sphere
         while not path_exists and placement_attempts < max_placement_attempts:
             grid = np.zeros((150, 150), dtype=np.int8)
-            for i in range(1, 21):
+            for i in range(1, 41):
                 obstacle_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, f"obstacle{i}")
                 if obstacle_body_id >= 0:
                     """Pick random size for the obstacle"""
@@ -534,7 +709,6 @@ class CubeNavigationEnv_class(gym.Env):
                     gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle{i}")
                     self.model.geom_size[gid, 0] = obs_size_x
                     self.model.geom_size[gid, 1] = obs_size_y
-
 
                     min_x_world = obstacle_x - obs_size_x - 0.36
                     max_x_world = obstacle_x + obs_size_x + 0.36
@@ -565,7 +739,6 @@ class CubeNavigationEnv_class(gym.Env):
             sphere_x, sphere_y = 5, 0  # East position
             self._place_obstacles_in_circle(radius=10)
         return cube_x, cube_y, sphere_x, sphere_y
-
 
     def _door_configuration(self):
         # Need two obstacles like walls which are positioned in a way that makes a door which is wide 1 meter
@@ -657,7 +830,6 @@ class CubeNavigationEnv_class(gym.Env):
                 cube_y = np.random.uniform(door_y + 1.5, 6.5)
             return cube_x, cube_y, sphere_x, sphere_y
 
-
     def _single_angle_configuration(self):
         # We need two walls which make 90 deg angle
         # Randomly pick the location of the corner and set the two walls
@@ -687,7 +859,6 @@ class CubeNavigationEnv_class(gym.Env):
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
 
-
             # Wall 2
             pos2_y = corner_y
             dist2_x = (-7.5 - corner_x) / 2
@@ -701,7 +872,6 @@ class CubeNavigationEnv_class(gym.Env):
                 # Goal up right
                 sphere_x = np.random.uniform(corner_x + 1, 6.5)
                 sphere_y = np.random.uniform(- 6.5, corner_y + 2)
-
 
                 cube_x = np.random.uniform(-6.5, corner_x - 1)
                 cube_y = np.random.uniform(corner_y + 2, 6.5)
@@ -819,7 +989,7 @@ class CubeNavigationEnv_class(gym.Env):
                 cube_y = np.random.uniform(-6.5, corner_y - 2)
             else:
                 # Goal down right
-                sphere_x = np.random.uniform(-6.5, corner_x - 1 )
+                sphere_x = np.random.uniform(-6.5, corner_x - 1)
                 sphere_y = np.random.uniform(-6.5, corner_y - 2)
 
                 cube_x = np.random.uniform(corner_x + 1, 6.5)
@@ -841,7 +1011,7 @@ class CubeNavigationEnv_class(gym.Env):
             if counter == 4:
                 break
 
-        choice_config = np.random.uniform(0,1)
+        choice_config = np.random.uniform(0, 1)
 
         if choice_config < 0.25:
             # Case 1 in y directiom
@@ -888,7 +1058,7 @@ class CubeNavigationEnv_class(gym.Env):
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
             self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x - 0.25)
             self.model.geom_size[gid, 1] = 0.25
-            choice = np.random.uniform(0,1)
+            choice = np.random.uniform(0, 1)
             if choice < 0.25:
                 # Goal up right
                 sphere_x = np.random.uniform(corner1_x + 1, 6.5)
@@ -982,7 +1152,7 @@ class CubeNavigationEnv_class(gym.Env):
             elif 0.5 < choice < 0.75:
                 # Goal in corridor start right
                 cube_x = np.random.uniform(-6.5, corner1_x - 1)
-                cube_y = np.random.uniform( -6.5, corner2_y - 2)
+                cube_y = np.random.uniform(-6.5, corner2_y - 2)
 
                 sphere_x = np.random.uniform(door_x + 1, 6.5)
                 sphere_y = door_y
@@ -1051,7 +1221,7 @@ class CubeNavigationEnv_class(gym.Env):
             elif 0.25 < choice < 0.5:
                 # Goal up right
                 sphere_x = np.random.uniform(corner1_x + 1, 6.5)
-                sphere_y = np.random.uniform( -6.5, corner1_y - 2)
+                sphere_y = np.random.uniform(-6.5, corner1_y - 2)
 
                 cube_x = door_x
                 cube_y = np.random.uniform(door_y + 1, 6.5)
@@ -1147,7 +1317,6 @@ class CubeNavigationEnv_class(gym.Env):
                 sphere_y = np.random.uniform(-6.5, door_y - 1)
             return cube_x, cube_y, sphere_x, sphere_y
 
-
     def _find_valid_obstacle_position(self, obstacle_num, cube_x, cube_y, sphere_x, sphere_y,
                                       min_x, max_x, min_y, max_y, min_separation, obs_half_x, obs_half_y):
         """Find valid position for a specific obstacle."""
@@ -1159,7 +1328,6 @@ class CubeNavigationEnv_class(gym.Env):
             x = np.random.uniform(min_x, max_x)
             y = np.random.uniform(min_y, max_y)
 
-
             # 2. Find the closest point (Px, Py) on the obstacle to the robot's center
             cube_closest_x = np.clip(cube_x, x - obs_half_x, x + obs_half_x)
             cube_closest_y = np.clip(cube_y, y - obs_half_y, y + obs_half_y)
@@ -1170,7 +1338,7 @@ class CubeNavigationEnv_class(gym.Env):
             cube_dist_y_sq = (cube_closest_y - cube_y) ** 2
             cube_distance_squared = cube_dist_x_sq + cube_dist_y_sq
             # the radius of the robot is 0.32 + safety margin(0.3)
-            cube_required_radius = (0.32 + 0.3)**2
+            cube_required_radius = (0.32 + 0.5) ** 2
             if cube_distance_squared < cube_required_radius:
                 attempts += 1
                 continue
@@ -1185,7 +1353,7 @@ class CubeNavigationEnv_class(gym.Env):
             sphere_dist_y_sq = (sphere_closest_y - sphere_y) ** 2
             sphere_distance_squared = sphere_dist_x_sq + sphere_dist_y_sq
             # the radius of the sphere is 1 + safety margin(0.3)
-            sphere_required_radius = (1 + 0.2) ** 2
+            sphere_required_radius = (1 + 0.5) ** 2
             if sphere_distance_squared < sphere_required_radius:
                 attempts += 1
                 continue
@@ -1201,8 +1369,8 @@ class CubeNavigationEnv_class(gym.Env):
                     half_size_x = geom_size_data[0]
                     half_size_y = geom_size_data[1]
 
-                    check_x = abs(x - other_pos[0]) < obs_half_x + half_size_x
-                    check_y = abs(y - other_pos[1]) < obs_half_y + half_size_y
+                    check_x = abs(x - other_pos[0]) < obs_half_x + half_size_x + 0.5
+                    check_y = abs(y - other_pos[1]) < obs_half_y + half_size_y + 0.5
 
                     if check_x and check_y:
                         too_close = True
@@ -1213,12 +1381,11 @@ class CubeNavigationEnv_class(gym.Env):
 
             attempts += 1
         # Fallback position
-        angle = (obstacle_num-1) * (2*np.pi/20)
+        angle = (obstacle_num - 1) * (2 * np.pi / 20)
         radius = 10.0
         x = radius * np.cos(angle)
         y = radius * np.sin(angle)
         return np.clip(x, min_x, max_x), np.clip(y, min_y, max_y), 1, 1
-
 
     def _place_obstacles_in_circle(self, radius=10.0):
         """Place all obstacles in a circle pattern as fallback."""
@@ -1230,192 +1397,6 @@ class CubeNavigationEnv_class(gym.Env):
                 y = radius * np.sin(angle)
                 self.model.body_pos[obstacle_body_id, :2] = [x, y]
 
-    def step(self, action):
-        # Movement parameters
-        move_max_linspeed = 0.4
-        max_ang_speed = 1
-        # Apply action
-        target_linear_velocity = float(action[0]) * move_max_linspeed
-        target_angular_velocity = float(action[1]) * max_ang_speed
-
-        alpha_v = 0.15  # linear response
-        alpha_w = 0.15  # angular response
-        # store previous velocities for smoothness reward
-        prev_lin_vel = self.linear_velocity
-        prev_ang_vel = self.angular_velocity
-
-        self.linear_velocity += alpha_v * (
-                target_linear_velocity - self.linear_velocity
-        )
-
-        self.angular_velocity += alpha_w * (
-                target_angular_velocity - self.angular_velocity
-        )
-
-        allowed_ang_vel = max_ang_speed * (1.0 - abs(self.linear_velocity) / move_max_linspeed)
-
-        allowed_ang_vel = max(0.0, allowed_ang_vel)
-
-        self.angular_velocity = np.clip(self.angular_velocity, -allowed_ang_vel, allowed_ang_vel)
-
-        allowed_lin_vel = move_max_linspeed * (1.0 - abs(self.angular_velocity) / max_ang_speed)
-
-        allowed_lin_vel = max(0.0, allowed_lin_vel)
-
-        self.linear_velocity = np.clip(self.linear_velocity,0.0,allowed_lin_vel)
-
-        linear_velocity = self.linear_velocity
-        angular_velocity = self.angular_velocity
-
-
-        # Get current position and orientation
-        x, y, theta = self.data.qpos[:3]
-        dt = self.model.opt.timestep  # 0.1 [s/step]
-        if (np.abs(angular_velocity) > 1e-3):
-            deltax = (linear_velocity / angular_velocity) * (np.sin(theta + angular_velocity * dt) - np.sin(theta))
-            deltay = (linear_velocity / angular_velocity) * (-np.cos(theta + angular_velocity * dt) + np.cos(theta))
-            x += deltax
-            y += deltay
-            theta += angular_velocity * dt
-        else:
-            # Updating position
-            x += linear_velocity * np.cos(theta) * dt
-            y += linear_velocity * np.sin(theta) * dt
-
-        # Set position and orientation
-        self.data.qpos[:3] = [x, y, theta]
-
-        # Step simulation
-        mujoco.mj_step(self.model, self.data)
-        self.current_step += 1
-
-        # Update simulation state
-        mujoco.mj_forward(self.model, self.data)
-
-        # Get observation and info
-        observation = self._get_obs()
-        info = self._get_info()
-        reward = 0.0
-        reward_components = {}
-
-        # Check for collision with obstacles
-        contact_with_obstacles = False
-        contact_with_sphere = False
-
-        cube_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "cube")
-        for i in range(self.data.ncon):
-            contact = self.data.contact[i]
-            geom1_id = contact.geom1
-            geom2_id = contact.geom2
-
-            if geom1_id == cube_geom_id or geom2_id == cube_geom_id:
-                other_geom_id = geom2_id if geom1_id == cube_geom_id else geom1_id
-                other_geom_name = mujoco.mj_id2name(self.model, mujoco.mjtObj.mjOBJ_GEOM, other_geom_id)
-
-                if (other_geom_name and "wall" in other_geom_name) or (
-                        other_geom_name and "obstacle" in other_geom_name):
-                    contact_with_obstacles = True
-                    break
-                elif other_geom_name and "sphere" in other_geom_name:
-                    contact_with_sphere = True
-                    break
-
-        # Calculate reward and check termination conditions
-        distance_to_sphere = info["distance_to_sphere"]
-        MAX_DIST_STEP = 0.5  # tune (typical robot movement per step)
-
-        r_progress = 2.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)
-        reward += r_progress
-        reward_components["progress"] = r_progress
-
-        # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
-        r_angle = -0.3 * (abs(self.relative_azimuth) / np.pi)
-        reward += r_angle
-        reward_components["angle"] = r_angle
-        # Negative reward as time passes, we want to reach the goal faster without stucking somewhere.
-        # I hope that this will make the robot move if he is stuck
-
-        r_time = -0.05 # Time penalty
-        reward += r_time
-        reward_components["time"] = r_time
-
-        # ACTION SMOOTHNESS
-        r_action = -0.03 * (action[0] ** 2 + action[1] ** 2)
-        reward += r_action
-        reward_components["action"] = r_action
-
-
-        lin_change = abs(linear_velocity - prev_lin_vel)
-        ang_change = abs(angular_velocity - prev_ang_vel)
-        # reward -= 0.40 * lin_change
-        # reward -= 0.15 * ang_change
-        # reward -= 0.02 * abs(angular_velocity)
-
-        # -------------------------
-        # VELOCITY SMOOTHNESS
-        # -------------------------
-        r_smooth = -0.40 * lin_change - 0.15 * ang_change
-        reward += r_smooth
-        reward_components["smoothness"] = r_smooth
-
-        reward += -0.02 * abs(angular_velocity)
-        reward_components["angular_bias"] = -0.02 * abs(angular_velocity)
-
-
-        # Terminal conditions
-        terminated = False
-        truncated = False
-
-        # LIDAR PENALTY
-        r_lidar = 0.0
-        too_close_to_obstacles = False
-        for i in range(1, len(self.lidar_readings)):
-            if self.lidar_readings[i] < 0.32 and self.lidar_readings[i] > 0.07:
-                d = self.lidar_readings[i]
-                r_lidar = -0.5 * np.exp(-d / 0.2)
-            elif self.lidar_readings[i] <= 0.15:
-                too_close_to_obstacles = True
-                break
-        reward += r_lidar
-        reward_components["lidar"] = r_lidar
-        self.episode_return += reward
-
-
-        if contact_with_obstacles or too_close_to_obstacles:
-            r_collision = -15.0
-            reward += r_collision
-            reward_components["collision"] = r_collision
-            self.episode_return += reward
-            self.last_episode_result = "collision"
-            info["steps_taken"] = self.current_step
-            info["episode_time_length"] = time.time() - self.episode_time_begin
-            terminated = True
-
-        # elif distance_to_sphere < 0.3 or contact_with_sphere:
-        elif distance_to_sphere < 2.0 or contact_with_sphere:
-            r_success = 25.0
-            reward += r_success
-            reward_components["success"] = r_success
-            self.episode_return += reward
-            self.last_episode_result = "success"
-            info["steps_taken"] = self.current_step
-            info["episode_time_length"] = time.time() - self.episode_time_begin
-            terminated = True
-
-        elif self.current_step >= self.max_episode_steps:
-            self.last_episode_result = "timeout"
-            info["steps_taken"] = self.current_step
-            info["episode_time_length"] = time.time() - self.episode_time_begin
-            truncated = True
-
-        self.previous_distance = distance_to_sphere
-
-        info["episode_result"] = self.last_episode_result
-        info["reward_components"] = reward_components
-        # Render if needed
-        if self.render_mode == "human":
-            self.render()
-        return observation, reward, terminated, truncated, info
 
     def render(self):
         if self.render_mode == "human" and self.viewer:

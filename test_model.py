@@ -3,16 +3,12 @@ import os, sys
 current_file_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_file_dir)  # Go up one level from training/ to CubeNav-RL/
 sys.path.insert(0, project_root)
-from stable_baselines3 import PPO, SAC, TD3
 from sb3_contrib import TQC
-from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecNormalize
 import argparse
 from envs.CubeNavSimEnv import CubeSimulationEnv_class
 
-INTERRUPTED = False
-print_one = 0
 
 
 import warnings
@@ -135,9 +131,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_rays", type=int, default=180, help="Number of LiDAR rays around the sphere.")
     parser.add_argument("--model_path", type=str, default="xml_models/simulation_model.xml",
                         help="Path to the MuJoCo model XML file.")
-    parser.add_argument("--num_envs", type=int, default=16, help="Number of parallel environments.")
     parser.add_argument("--run_id", type=str, default="TEST_lidarscnas", help="Run ID for TensorBoard logging.")
-    parser.add_argument("--trainer", type=str, default="TQC", help="Trainer to use (PPO, SAC, TD3, TQC).")
     args = parser.parse_args()
     name = args.run_id
 
@@ -146,14 +140,7 @@ if __name__ == "__main__":
 
 
     # Load the last trained model with the correct algorithm class
-    if args.trainer == "PPO":
-        model = PPO.load(f"{name}")
-    elif args.trainer == "SAC":
-        model = SAC.load(f"{name}")
-    elif args.trainer == "TD3":
-        model = TD3.load(f"{name}")
-    elif args.trainer == "TQC":
-        model = TQC.load(f"{name}")
+    model = TQC.load(f"{name}")
 
     eval_env = DummyVecEnv([lambda: Monitor(CubeSimulationEnv_class(
         num_rays=args.num_rays,
@@ -162,9 +149,6 @@ if __name__ == "__main__":
         training_mode=False
     ))])
 
-    # Debug: Print observation space shapes
-    # print(f"Current observation space shape: {eval_env.observation_space.shape}")
-    # print("PATH:", os.path.join(base_dir, "TENSORBOARD/", f"{args.run_id}.pkl"))
     # Try to load normalization, but handle shape mismatch
     try:
         if os.path.exists(os.path.join(base_dir, "TENSORBOARD/", f"{args.run_id}.pkl")):
@@ -235,6 +219,15 @@ if __name__ == "__main__":
         ax.tick_params(labelbottom=True)
 
     plt.tight_layout()
-    plt.savefig("traj_plot_new_NN_new_reward.png", dpi=300, bbox_inches="tight")
+    base_name = f"figures/traj_plot_{args.run_id}"
+    extension = ".png"
+    filename = f"{base_name}{extension}"
+
+    counter = 1
+    while os.path.exists(filename):
+        filename = f"{base_name}_{counter}{extension}"
+        counter += 1
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
     plt.close()
 
