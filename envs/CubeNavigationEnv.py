@@ -11,6 +11,13 @@ import heapq
 
 print_one = 0
 
+def print_rewards(dict):
+    print('--------------------------')
+    for k,v in dict['reward_components'].items():
+        print(f"{k}:{v:.3f}")
+    # print('Total rewards:', dict['reward_components']['total_reward'])
+    print('--------------------------')
+
 
 def world_to_grid(pos):
     """Converts world coordinates (x, y) from [-7.5, 7.5] to grid coordinates (row, col)."""
@@ -103,6 +110,7 @@ class CubeNavigationEnv_class(gym.Env):
                  training_mode=True):
         super().__init__()
 
+
         self.num_rays = num_rays
         self.training_mode = training_mode
         self.max_episode_steps = 1000
@@ -164,6 +172,9 @@ class CubeNavigationEnv_class(gym.Env):
         # Reset the environment
         self.reset()
 
+
+
+
     def _load_and_modify_xml_model(self):
         """Load and modify the XML model with proper asset path resolution."""
         if not os.path.exists(self.model_path):
@@ -214,7 +225,7 @@ class CubeNavigationEnv_class(gym.Env):
 
             # Make the rays 180°facing front
             # here "+ np.pi*3/2" moves the scans starting from 270 deg to 90 deg (CCW)
-            angle = np.pi * i / self.num_rays + np.pi * 3 / 2
+            angle = np.pi * i / self.num_rays + np.pi * 3 /2
 
             cos_angle = np.cos(angle)
 
@@ -259,13 +270,15 @@ class CubeNavigationEnv_class(gym.Env):
         """
         noise = 0.02
 
-        self.lidar_readings = self.lidar_readings + np.random.normal(0, noise * self.lidar_readings)
+        self.lidar_readings = self.lidar_readings + np.random.normal(0, noise *self.lidar_readings)
         self.lidar_readings = np.clip(self.lidar_readings, 0, 30)
 
         # # Get the reading's indices which are not full scale
         # not_full_idx = np.where(self.lidar_readings < 30)[0]
         # indices = np.random.choice(len(not_full_idx), size=int(len(self.lidar_readings)/20), replace=False) # to replace
         # self.lidar_readings[not_full_idx[indices]] = 30
+
+
 
         # Get positions
         cube_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "cube_body")
@@ -308,6 +321,7 @@ class CubeNavigationEnv_class(gym.Env):
         obs = np.concatenate([self.lidar_readings, [distance, self.relative_azimuth]])
         # obs = np.array([distance, self.relative_azimuth])
 
+
         return obs.astype(np.float32)
 
     def _get_info(self):
@@ -340,6 +354,8 @@ class CubeNavigationEnv_class(gym.Env):
             "cube_position": cube_pos,
             "sphere_position": sphere_pos
         }
+
+
 
     def reset(self, seed=None, options=None):
         # --- (Episode Stats Update Code remains unchanged) ---
@@ -376,23 +392,12 @@ class CubeNavigationEnv_class(gym.Env):
         # Reset step counter and return
         self.current_step = 0
         self.episode_return = 0
+        self.previous_distance = 30
         self.stuck_counter = 0
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
 
         # Define arena boundaries with buffer
-
-        """The space is 15x15"""
-        wall_buffer = 0.2
-        # min_x = -7.5 + wall_buffer
-        # max_x = 7.5 - wall_buffer
-        # min_y = -7.5 + wall_buffer
-        # max_y = 7.5 - wall_buffer
-        #
-        # resolution = 0.1
-        # min_separation = 5.0  # Minimum distance between objects
-        # max_placement_attempts = 100
-        # placement_attempts = 0
 
         # CLEANUP: Move all potential obstacles out of the arena (e.g., to 20, 20)
         for i in range(1, 21):  # Checking for obstacles 1 through 10
@@ -403,8 +408,9 @@ class CubeNavigationEnv_class(gym.Env):
                 gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle{i}")
                 self.model.geom_size[gid, :2] = [0.1, 0.1]
 
-
         CONFIGURATION = ["door", "single_angle", "two_angles", "obstacles", "empty"]
+        # CONFIGURATION = ["two_angles"]
+
         cube_yaw = np.random.uniform(-np.pi, np.pi)
 
         """Pick random size for the obstacle"""
@@ -419,6 +425,7 @@ class CubeNavigationEnv_class(gym.Env):
             cube_x, cube_y, sphere_x, sphere_y = self._obstacles()
         else:
             cube_x, cube_y, sphere_x, sphere_y = self._empty()
+
 
         # Set cube and sphere positions
         self.data.qpos[:3] = [cube_x, cube_y, cube_yaw]
@@ -436,16 +443,30 @@ class CubeNavigationEnv_class(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
         self.previous_distance = info["distance_to_sphere"]
+        self.reward_components = {"progress": 0.0,
+                                  "angle": 0.0,
+                                  "time": 0.0,
+                                  "action": 0.0,
+                                  "smoothness": 0.0,
+                                  "angular_bias": 0.0,
+                                  "lidar": 0.0,
+                                  "steps":0,
+                                  "total_reward":0.00}
+
 
         return observation, info
 
     def step(self, action):
+
+        self.reward_components["steps"] += 1
         # Movement parameters
         move_max_linspeed = 0.4
         max_ang_speed = 1
         # Apply action
         target_linear_velocity = float(action[0]) * move_max_linspeed
         target_angular_velocity = float(action[1]) * max_ang_speed
+        # target_linear_velocity = 0
+        # target_angular_velocity = 0
 
         alpha_v = 0.15  # linear response
         alpha_w = 0.15  # angular response
@@ -471,10 +492,11 @@ class CubeNavigationEnv_class(gym.Env):
 
         allowed_lin_vel = max(0.0, allowed_lin_vel)
 
-        self.linear_velocity = np.clip(self.linear_velocity, 0.0, allowed_lin_vel)
+        self.linear_velocity = np.clip(self.linear_velocity ,0.0 ,allowed_lin_vel)
 
         linear_velocity = self.linear_velocity
         angular_velocity = self.angular_velocity
+
 
         # Get current position and orientation
         x, y, theta = self.data.qpos[:3]
@@ -504,7 +526,7 @@ class CubeNavigationEnv_class(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
         reward = 0.0
-        reward_components = {}
+        # reward_components = {}
         # Check for collision with obstacles
         contact_with_obstacles = False
         contact_with_sphere = False
@@ -529,100 +551,119 @@ class CubeNavigationEnv_class(gym.Env):
 
         # Calculate reward and check termination conditions
         distance_to_sphere = info["distance_to_sphere"]
-
-        MAX_DIST_STEP = 0.25  # tune (typical robot movement per step)
-
-        r_progress = 2.0 * np.clip((self.previous_distance - distance_to_sphere) / MAX_DIST_STEP, -1, 1)
+        delta_progress = self.previous_distance - distance_to_sphere
+        r_progress = 3*delta_progress
         reward += r_progress
-        reward_components["progress"] = r_progress
-
+        self.reward_components["progress"] += r_progress
         # Find the minimum lidar reading (assuming lidar_readings is a numpy array)
         r_angle = -0.3 * (abs(self.relative_azimuth) / np.pi)
         reward += r_angle
-        reward_components["angle"] = r_angle
+        self.reward_components["angle"] += r_angle
         # Negative reward as time passes, we want to reach the goal faster without stucking somewhere.
         # I hope that this will make the robot move if he is stuck
 
         r_time = -0.05  # Time penalty
         reward += r_time
-        reward_components["time"] = r_time
+        self.reward_components["time"] += r_time
 
-        # ACTION SMOOTHNESS
         r_action = -0.03 * (action[0] ** 2 + action[1] ** 2)
         reward += r_action
-        reward_components["action"] = r_action
+        self.reward_components["action"] += r_action
+
+
+
+
 
         lin_change = abs(linear_velocity - prev_lin_vel)
         ang_change = abs(angular_velocity - prev_ang_vel)
         r_smooth = -0.40 * lin_change - 0.15 * ang_change
         reward += r_smooth
-        reward_components["smoothness"] = r_smooth
+        self.reward_components["smoothness"] += r_smooth
+
 
         reward += -0.02 * abs(angular_velocity)
-        reward_components["angular_bias"] = -0.02 * abs(angular_velocity)
+        self.reward_components["angular_bias"] += -0.02 * abs(angular_velocity)
+
 
         # Terminal conditions
         terminated = False
         truncated = False
 
-        # LIDAR PENALTY
+
         r_lidar = 0
         too_close_to_obstacles = False
-        d_min = 1
         for i in range(1, len(self.lidar_readings)):
-            if self.lidar_readings[i] < 0.8 and self.lidar_readings[i] > 0.2:
+            if self.lidar_readings[i] < 0.5 and self.lidar_readings[i] > 0.35:
                 d = self.lidar_readings[i]
-                if d_min > d:
-                    d_min = d
-            elif self.lidar_readings[i] <= 0.2:
+                r_lidar += -0.3 * np.exp(-d / 0.2)
+            elif self.lidar_readings[i] <= 0.35:
                 too_close_to_obstacles = True
                 break
-        if d_min != 1:
-            d_norm = np.clip(d_min / 0.8, 0.0, 1.0)
-            r_lidar = -10.0 * (1.0 - d_norm)
         reward += r_lidar
-        reward_components["lidar"] = r_lidar
-        self.episode_return += reward
+        # self.episode_return += reward
+        self.reward_components["lidar"] += r_lidar
 
-        # if distance_to_sphere < 0.5:
-        #     print(f"distance to goal: {distance_to_sphere}")
+
 
         if contact_with_obstacles or too_close_to_obstacles:
-            r_collision = -50.0
-            reward += r_collision
-            reward_components["collision"] = r_collision
-            self.episode_return += reward
+            reward -= 20
+            # self.episode_return += reward
+
+            # self.reward_components['total_reward'] += self.episode_return
+            # info["reward_components"] = self.reward_components
+            # print_rewards(info)
+            # self.reward_components = {}
+
+
             self.last_episode_result = "collision"
             info["steps_taken"] = self.current_step
             info["episode_time_length"] = time.time() - self.episode_time_begin
             terminated = True
 
         elif distance_to_sphere < 2.0 or contact_with_sphere:
+            reward += 30
+            # self.episode_return += reward
 
-            r_success = 20.0
-            reward += r_success
-            reward_components["success"] = r_success
+            # self.reward_components['total_reward'] += self.episode_return
+            # info["reward_components"] = self.reward_components
+            # print_rewards(info)
+            # self.reward_components = {}
 
-            self.episode_return += reward
             self.last_episode_result = "success"
             info["steps_taken"] = self.current_step
             info["episode_time_length"] = time.time() - self.episode_time_begin
             terminated = True
 
         elif self.current_step >= self.max_episode_steps:
+            # self.reward_components['total_reward'] += self.episode_return
+            # info["reward_components"] = self.reward_components
+            # # print_rewards(info)
+            # self.reward_components = {}
             self.last_episode_result = "timeout"
             info["steps_taken"] = self.current_step
             info["episode_time_length"] = time.time() - self.episode_time_begin
             truncated = True
-
+        self.episode_return += reward
         self.previous_distance = distance_to_sphere
 
+        if terminated or truncated:
+            self.reward_components['total_reward'] += self.episode_return
+            info["reward_components"] = self.reward_components
+            print_rewards(info)
+            self.reward_components = {}
+
+
+
         info["episode_result"] = self.last_episode_result
-        info["reward_components"] = reward_components
+        # info["reward_components"] = self.reward_components
 
         # Render if needed
         if self.render_mode == "human":
             self.render()
+        self.dummy_rew += reward
+
+
+
         return observation, reward, terminated, truncated, info
 
     def _find_valid_sphere_position(self, cube_x, cube_y, min_x, max_x, min_y, max_y, min_separation):
@@ -655,6 +696,7 @@ class CubeNavigationEnv_class(gym.Env):
             cube_x, cube_y, min_x + 1, max_x - 1, min_y + 1, max_y - 1, 5
         )
         return cube_x, cube_y, sphere_x, sphere_y
+
 
     def _obstacles(self):
         wall_buffer = 0.2
@@ -690,7 +732,7 @@ class CubeNavigationEnv_class(gym.Env):
         # 3. Place obstacles with checks against both cube and sphere
         while not path_exists and placement_attempts < max_placement_attempts:
             grid = np.zeros((150, 150), dtype=np.int8)
-            for i in range(1, 41):
+            for i in range(1, 21):
                 obstacle_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, f"obstacle{i}")
                 if obstacle_body_id >= 0:
                     """Pick random size for the obstacle"""
@@ -709,6 +751,7 @@ class CubeNavigationEnv_class(gym.Env):
                     gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle{i}")
                     self.model.geom_size[gid, 0] = obs_size_x
                     self.model.geom_size[gid, 1] = obs_size_y
+
 
                     min_x_world = obstacle_x - obs_size_x - 0.36
                     max_x_world = obstacle_x + obs_size_x + 0.36
@@ -740,14 +783,16 @@ class CubeNavigationEnv_class(gym.Env):
             self._place_obstacles_in_circle(radius=10)
         return cube_x, cube_y, sphere_x, sphere_y
 
+
     def _door_configuration(self):
         # Need two obstacles like walls which are positioned in a way that makes a door which is wide 1 meter
         # The door can be either in the x direction or in the y direction
         # Also the door can be moved up and down and left and right
 
-        # Obstacles for y direction. Pick random x and y dor the door center between (-5, 5)
+        # Obstacles for y direction. Pick random x and y for the door center between (-5, 5)
         door_x = np.random.uniform(-5.0, 5.0)
         door_y = np.random.uniform(-5.0, 5.0)
+        door_half_width = np.random.uniform(0.6, 0.9)
         obs_ids = []
         counter = 0
         for i in range(1, 10):
@@ -762,7 +807,7 @@ class CubeNavigationEnv_class(gym.Env):
             # Wall 1
             pos1_x = door_x
             dist1_y = (7.5 - door_y) / 2
-            pos1_y = 7.5 - dist1_y + 0.5
+            pos1_y = 7.5 - dist1_y + door_half_width
 
             self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
@@ -772,7 +817,7 @@ class CubeNavigationEnv_class(gym.Env):
             # Wall 2
             pos2_x = door_x
             dist2_y = (-7.5 - door_y) / 2
-            pos2_y = -7.5 - dist2_y - 0.5
+            pos2_y = -7.5 - dist2_y - door_half_width
             self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
             self.model.geom_size[gid, 0] = 0.25
@@ -798,7 +843,7 @@ class CubeNavigationEnv_class(gym.Env):
             # Wall 1
             pos1_y = door_y
             dist1_x = (7.5 - door_x) / 2
-            pos1_x = 7.5 - dist1_x + 0.5
+            pos1_x = 7.5 - dist1_x + door_half_width
 
             self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
@@ -808,7 +853,7 @@ class CubeNavigationEnv_class(gym.Env):
             # Wall 2
             pos2_y = door_y
             dist2_x = (-7.5 - door_x) / 2
-            pos2_x = -7.5 - dist2_x - 0.5
+            pos2_x = -7.5 - dist2_x - door_half_width
             self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
             self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x)
@@ -829,6 +874,7 @@ class CubeNavigationEnv_class(gym.Env):
                 cube_x = np.random.uniform(door_x - 2, door_x + 2)
                 cube_y = np.random.uniform(door_y + 1.5, 6.5)
             return cube_x, cube_y, sphere_x, sphere_y
+
 
     def _single_angle_configuration(self):
         # We need two walls which make 90 deg angle
@@ -859,6 +905,7 @@ class CubeNavigationEnv_class(gym.Env):
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
 
+
             # Wall 2
             pos2_y = corner_y
             dist2_x = (-7.5 - corner_x) / 2
@@ -872,6 +919,7 @@ class CubeNavigationEnv_class(gym.Env):
                 # Goal up right
                 sphere_x = np.random.uniform(corner_x + 1, 6.5)
                 sphere_y = np.random.uniform(- 6.5, corner_y + 2)
+
 
                 cube_x = np.random.uniform(-6.5, corner_x - 1)
                 cube_y = np.random.uniform(corner_y + 2, 6.5)
@@ -989,7 +1037,7 @@ class CubeNavigationEnv_class(gym.Env):
                 cube_y = np.random.uniform(-6.5, corner_y - 2)
             else:
                 # Goal down right
-                sphere_x = np.random.uniform(-6.5, corner_x - 1)
+                sphere_x = np.random.uniform(-6.5, corner_x - 1 )
                 sphere_y = np.random.uniform(-6.5, corner_y - 2)
 
                 cube_x = np.random.uniform(corner_x + 1, 6.5)
@@ -997,7 +1045,7 @@ class CubeNavigationEnv_class(gym.Env):
             return cube_x, cube_y, sphere_x, sphere_y
 
     def _two_angles_configuration(self):
-        corridor_size = np.random.uniform(1.5, 4)
+        corridor_size = np.random.uniform(1.35, 3)
         door_x = np.random.uniform(-3, 3)
         door_y = np.random.uniform(-3, 3)
 
@@ -1014,34 +1062,35 @@ class CubeNavigationEnv_class(gym.Env):
         choice_config = np.random.uniform(0, 1)
 
         if choice_config < 0.25:
+            """IT IS CORRECT, DON'T TOUCH"""
+
             # Case 1 in y directiom
             corner1_x = door_x
             corner1_y = door_y + corridor_size / 2
             corner2_y = door_y - corridor_size / 2
 
             # Corner 1
-            # Wall 1
-            pos1_x = corner1_x
+            # Wall 1 Y DIR
+            pos1_x = corner1_x - 0.25
             dist1_y = (7.5 - corner1_y) / 2
             pos1_y = 7.5 - dist1_y
-
             self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = 7.5 - pos1_y
 
-            # Wall 2
-            pos2_y = corner1_y
+            # Wall 2 X DIR
+            pos2_y = corner1_y + 0.25
             dist2_x = (-7.5 - corner1_x) / 2
             pos2_x = -7.5 - dist2_x
             self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
-            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x - 0.25)
+            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x )
             self.model.geom_size[gid, 1] = 0.25
 
             # Corner 2
-            # Wall 1
-            pos1_x = corner1_x
+            # Wall 1 Y DIR
+            pos1_x = corner1_x - 0.25
             dist1_y = (-7.5 - corner2_y) / 2
             pos1_y = -7.5 - dist1_y
 
@@ -1050,13 +1099,13 @@ class CubeNavigationEnv_class(gym.Env):
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
 
-            # Wall 2
-            pos2_y = corner2_y
+            # Wall 2 X DIR
+            pos2_y = corner2_y - 0.25
             dist2_x = (-7.5 - corner1_x) / 2
             pos2_x = -7.5 - dist2_x
             self.model.body_pos[obs_ids[3], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
-            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x - 0.25)
+            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x)
             self.model.geom_size[gid, 1] = 0.25
             choice = np.random.uniform(0, 1)
             if choice < 0.25:
@@ -1090,89 +1139,97 @@ class CubeNavigationEnv_class(gym.Env):
 
             return cube_x, cube_y, sphere_x, sphere_y
         elif 0.25 < choice_config < 0.5:
-            # Case 2 in y directiom
-            corner1_x = door_x
-            corner1_y = door_y + corridor_size / 2
-            corner2_y = door_y - corridor_size / 2
-
-            # Corner 1
-            # Wall 1
-            pos1_x = corner1_x
-            dist1_y = (7.5 - corner1_y) / 2
-            pos1_y = 7.5 - dist1_y
-
-            self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
-            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
-            self.model.geom_size[gid, 0] = 0.25
-            self.model.geom_size[gid, 1] = 7.5 - pos1_y
-
-            # Wall 2
-            pos2_y = corner1_y
-            dist2_x = (7.5 - corner1_x) / 2
-            pos2_x = 7.5 - dist2_x
-            self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
-            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
-            self.model.geom_size[gid, 0] = 7.5 - pos2_x + 0.25
-            self.model.geom_size[gid, 1] = 0.25
-
-            # Corner 2
-            # Wall 1
-            pos1_x = corner1_x
-            dist1_y = (-7.5 - corner2_y) / 2
-            pos1_y = -7.5 - dist1_y
-
-            self.model.body_pos[obs_ids[2], :2] = [pos1_x, pos1_y]
-            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle3")
-            self.model.geom_size[gid, 0] = 0.25
-            self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
-
-            # Wall 2
-            pos2_y = corner2_y
-            dist2_x = (7.5 - corner1_x) / 2
-            pos2_x = 7.5 - dist2_x
-            self.model.body_pos[obs_ids[3], :2] = [pos2_x, pos2_y]
-            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
-            self.model.geom_size[gid, 0] = 7.5 - pos2_x + 0.25
-            self.model.geom_size[gid, 1] = 0.25
-            choice = np.random.uniform(0, 1)
-            if choice < 0.25:
-                # Goal down right
-                sphere_x = np.random.uniform(-6.5, corner1_x - 1)
-                sphere_y = np.random.uniform(-6.5, corner2_y - 2)
-
-                cube_x = np.random.uniform(door_x + 1, 6.5)
-                cube_y = door_y
-            elif 0.25 < choice < 0.5:
-                # Goal down left
-                sphere_x = np.random.uniform(-6.5, corner1_x - 1)
-                sphere_y = np.random.uniform(corner1_y + 2, 6.5)
-
-                cube_x = np.random.uniform(door_x + 1, 6.5)
-                cube_y = door_y
-            elif 0.5 < choice < 0.75:
-                # Goal in corridor start right
-                cube_x = np.random.uniform(-6.5, corner1_x - 1)
-                cube_y = np.random.uniform(-6.5, corner2_y - 2)
-
-                sphere_x = np.random.uniform(door_x + 1, 6.5)
-                sphere_y = door_y
-            else:
-                # Goal in corridor start left
-                cube_x = np.random.uniform(-6.5, corner1_x - 1)
-                cube_y = np.random.uniform(corner1_y + 2, 6.5)
-
-                sphere_x = np.random.uniform(door_x + 1, 6.5)
-                sphere_y = door_y
-            return cube_x, cube_y, sphere_x, sphere_y
-        elif 0.5 < choice_config < 0.75:
+            """IT IS CORRECT, DON'T TOUCH"""
             # Case 1 in x directiom
             corner1_x = door_x + corridor_size / 2
             corner2_x = door_x - corridor_size / 2
             corner1_y = door_y
 
             # Corner 1
-            # Wall 1
-            pos1_x = corner1_x
+            # Wall 1 Y direction
+            pos1_x = corner1_x + 0.25
+            dist1_y = (7.5 + corner1_y) / 2
+            pos1_y = -7.5 + dist1_y
+
+
+            self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
+            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
+            self.model.geom_size[gid, 0] = 0.25
+            self.model.geom_size[gid, 1] = 7.5 + pos1_y
+
+            # Wall 2 X direction
+            pos2_y = corner1_y - 0.25
+            dist2_x = (7.5 - corner1_x) / 2
+            pos2_x = 7.5 - dist2_x
+            self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
+            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
+            self.model.geom_size[gid, 0] = 7.5 - pos2_x
+            self.model.geom_size[gid, 1] = 0.25
+
+            # Corner 2
+            # Wall 1 Y direction
+            pos1_x = corner2_x - 0.25
+            dist1_y = (7.5 + corner1_y) / 2
+            pos1_y = -7.5 + dist1_y
+
+            self.model.body_pos[obs_ids[2], :2] = [pos1_x, pos1_y]
+            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle3")
+            self.model.geom_size[gid, 0] = 0.25
+            self.model.geom_size[gid, 1] = 7.5 + pos1_y
+
+            # # Wall 2 X direction
+            pos2_y = corner1_y - 0.25
+            dist2_x = (-7.5 - corner2_x) / 2
+            pos2_x = -7.5 - dist2_x
+
+            self.model.body_pos[obs_ids[3], :2] = [pos2_x, pos2_y]
+            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
+            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x)
+            self.model.geom_size[gid, 1] = 0.25
+
+            choice = np.random.uniform(0, 1)
+            if choice < 0.25:
+                # Goal down left
+                sphere_x = np.random.uniform(-6.5, corner2_x - 1)
+                sphere_y = np.random.uniform(6.5, corner1_y + 1)
+
+
+                cube_x = door_x
+                cube_y = np.random.uniform(-6.5, door_y - 2)
+
+            elif 0.25 < choice < 0.5:
+                # Goal up left
+                sphere_x = np.random.uniform(corner1_x + 1, 6.5)
+                sphere_y = np.random.uniform(6.5, corner1_y + 1)
+
+                cube_x = door_x
+                cube_y = np.random.uniform(-6.5, door_y - 2)
+            elif 0.5 < choice < 0.75:
+                # Goal in corridor start down left
+                cube_x = np.random.uniform(-6.5, corner2_x - 1)
+                cube_y = np.random.uniform(6.5, corner1_y + 1)
+
+                sphere_x = door_x
+                sphere_y = np.random.uniform(-6.5, door_y - 2)
+            else:
+                # Goal in corridor start up left
+                cube_x = np.random.uniform(corner1_x + 1, 6.5)
+                cube_y = np.random.uniform(6.5, corner1_y + 1)
+
+                sphere_x = door_x
+                sphere_y = np.random.uniform(-6.5, door_y - 2)
+            return cube_x, cube_y, sphere_x, sphere_y
+        elif 0.5 < choice_config < 0.75:
+            """IT IS CORRECT, DON'T TOUCH"""
+
+            # Case 1 in x directiom
+            corner1_x = door_x + corridor_size / 2
+            corner2_x = door_x - corridor_size / 2
+            corner1_y = door_y
+
+            # Corner 1
+            # Wall 1 Y direction
+            pos1_x = corner1_x + 0.25
             dist1_y = (7.5 - corner1_y) / 2
             pos1_y = 7.5 - dist1_y
 
@@ -1181,18 +1238,18 @@ class CubeNavigationEnv_class(gym.Env):
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = 7.5 - pos1_y
 
-            # Wall 2
-            pos2_y = corner1_y
+            # Wall 2 X direction
+            pos2_y = corner1_y + 0.25
             dist2_x = (7.5 - corner1_x) / 2
             pos2_x = 7.5 - dist2_x
             self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
-            self.model.geom_size[gid, 0] = 7.5 - pos2_x + 0.25
+            self.model.geom_size[gid, 0] = 7.5 - pos2_x
             self.model.geom_size[gid, 1] = 0.25
 
             # Corner 2
-            # Wall 1
-            pos1_x = corner2_x
+            # Wall 1 Y direction
+            pos1_x = corner2_x - 0.25
             dist1_y = (7.5 - corner1_y) / 2
             pos1_y = 7.5 - dist1_y
 
@@ -1201,14 +1258,14 @@ class CubeNavigationEnv_class(gym.Env):
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = 7.5 - pos1_y
 
-            # Wall 2
-            pos2_y = corner1_y
+            # Wall 2 X direction
+            pos2_y = corner1_y + 0.25
             dist2_x = (-7.5 - corner2_x) / 2
             pos2_x = -7.5 - dist2_x
 
             self.model.body_pos[obs_ids[3], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
-            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x - 0.25)
+            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x)
             self.model.geom_size[gid, 1] = 0.25
             choice = np.random.uniform(0, 1)
             if choice < 0.25:
@@ -1241,88 +1298,94 @@ class CubeNavigationEnv_class(gym.Env):
                 sphere_y = np.random.uniform(door_y + 1, 6.5)
             return cube_x, cube_y, sphere_x, sphere_y
         else:
-            # Case 1 in x directiom
-            corner1_x = door_x + corridor_size / 2
-            corner2_x = door_x - corridor_size / 2
-            corner1_y = door_y
+            """IT IS CORRECT, DON'T TOUCH"""
+            # Case 1 in y directiom
+            corner1_x = door_x
+            corner1_y = door_y + corridor_size / 2
+            corner2_y = door_y - corridor_size / 2
 
             # Corner 1
-            # Wall 1
-            pos1_x = corner1_x
-            dist1_y = (-7.5 - corner1_y) / 2
-            pos1_y = -7.5 - dist1_y
-
+            # Wall 1 Y DIR
+            pos1_x = corner1_x + 0.25
+            dist1_y = (7.5 - corner1_y) / 2
+            pos1_y = 7.5 - dist1_y
             self.model.body_pos[obs_ids[0], :2] = [pos1_x, pos1_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle1")
             self.model.geom_size[gid, 0] = 0.25
-            self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
+            self.model.geom_size[gid, 1] = 7.5 - pos1_y
 
-            # Wall 2
-            pos2_y = corner1_y
-            dist2_x = (7.5 - corner1_x) / 2
-            pos2_x = 7.5 - dist2_x
+            # Wall 2 X DIR
+            pos2_y = corner1_y + 0.25
+            dist2_x = (-7.5 + corner1_x) / 2
+            pos2_x = 7.5 + dist2_x
+
+
             self.model.body_pos[obs_ids[1], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle2")
-            self.model.geom_size[gid, 0] = 7.5 - pos2_x + 0.25
+            self.model.geom_size[gid, 0] = abs(-7.5 + pos2_x)
             self.model.geom_size[gid, 1] = 0.25
 
             # Corner 2
-            # Wall 1
-            pos1_x = corner2_x
-            dist1_y = (-7.5 - corner1_y) / 2
+            # Wall 1 Y DIR
+            pos1_x = corner1_x + 0.25
+            dist1_y = (-7.5 - corner2_y) / 2
             pos1_y = -7.5 - dist1_y
+
 
             self.model.body_pos[obs_ids[2], :2] = [pos1_x, pos1_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle3")
             self.model.geom_size[gid, 0] = 0.25
             self.model.geom_size[gid, 1] = abs(-7.5 - pos1_y)
 
-            # Wall 2
-            pos2_y = corner1_y
-            dist2_x = (-7.5 - corner2_x) / 2
-            pos2_x = -7.5 - dist2_x
+            # Wall 2 X DIR
+            pos2_y = corner2_y - 0.25
+            dist2_x = (-7.5 + corner1_x) / 2
+            pos2_x = 7.5 + dist2_x
 
             self.model.body_pos[obs_ids[3], :2] = [pos2_x, pos2_y]
             gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, f"obstacle4")
-            self.model.geom_size[gid, 0] = abs(-7.5 - pos2_x - 0.25)
+            self.model.geom_size[gid, 0] = abs(7.5 - pos2_x)
             self.model.geom_size[gid, 1] = 0.25
             choice = np.random.uniform(0, 1)
             if choice < 0.25:
-                # Goal down left
-                sphere_x = np.random.uniform(-6.5, corner2_x - 1)
-                sphere_y = np.random.uniform(corner1_y + 2, 6.5)
+                # Goal down right
+                sphere_x = np.random.uniform(-6.5, corner1_x - 2)
+                sphere_y = np.random.uniform(-6.5, corner2_y - 2)
 
-                cube_x = door_x
-                cube_y = np.random.uniform(-6.5, door_y - 1)
+
+                cube_x = np.random.uniform(door_x - 1, 6.5)
+                cube_y = door_y
             elif 0.25 < choice < 0.5:
-                # Goal up left
-                sphere_x = np.random.uniform(corner1_x + 1, 6.5)
+                # Goal down left
+                sphere_x = np.random.uniform(-6.5, corner1_x - 2)
                 sphere_y = np.random.uniform(corner1_y + 2, 6.5)
 
-                cube_x = door_x
-                cube_y = np.random.uniform(-6.5, door_y - 1)
+                cube_x = np.random.uniform(door_x - 1, 6.5)
+                cube_y = door_y
             elif 0.5 < choice < 0.75:
-                # Goal in corridor start down left
-                cube_x = np.random.uniform(-6.5, corner2_x - 1)
-                cube_y = np.random.uniform(corner1_y + 2, 6.5)
+                # Goal in corridor start right
+                cube_x = np.random.uniform(-6.5, corner1_x - 2)
+                cube_y = np.random.uniform(-6.5, corner2_y - 2)
 
-                sphere_x = door_x
-                sphere_y = np.random.uniform(-6.5, door_y - 1)
+                sphere_x = np.random.uniform(door_x - 1, 6.5)
+                sphere_y = door_y
             else:
-                # Goal in corridor start up left
-                cube_x = np.random.uniform(corner1_x + 1, 6.5)
+                # Goal in corridor start left
+                cube_x = np.random.uniform(-6.5, corner1_x - 2)
                 cube_y = np.random.uniform(corner1_y + 2, 6.5)
 
-                sphere_x = door_x
-                sphere_y = np.random.uniform(-6.5, door_y - 1)
+                sphere_x =  np.random.uniform(door_x - 1, 6.5)
+                sphere_y = door_y
+
             return cube_x, cube_y, sphere_x, sphere_y
+
 
     def _find_valid_obstacle_position(self, obstacle_num, cube_x, cube_y, sphere_x, sphere_y,
                                       min_x, max_x, min_y, max_y, min_separation, obs_half_x, obs_half_y):
         """Find valid position for a specific obstacle."""
         attempts = 0
         max_attempts = 100
-
+        safety_margin = 0.8
         while attempts < max_attempts:
             # Pick x and y coordinates
             x = np.random.uniform(min_x, max_x)
@@ -1338,7 +1401,7 @@ class CubeNavigationEnv_class(gym.Env):
             cube_dist_y_sq = (cube_closest_y - cube_y) ** 2
             cube_distance_squared = cube_dist_x_sq + cube_dist_y_sq
             # the radius of the robot is 0.32 + safety margin(0.3)
-            cube_required_radius = (0.32 + 0.5) ** 2
+            cube_required_radius = (0.32 + safety_margin) ** 2
             if cube_distance_squared < cube_required_radius:
                 attempts += 1
                 continue
@@ -1353,7 +1416,7 @@ class CubeNavigationEnv_class(gym.Env):
             sphere_dist_y_sq = (sphere_closest_y - sphere_y) ** 2
             sphere_distance_squared = sphere_dist_x_sq + sphere_dist_y_sq
             # the radius of the sphere is 1 + safety margin(0.3)
-            sphere_required_radius = (1 + 0.5) ** 2
+            sphere_required_radius = (1 + safety_margin) ** 2
             if sphere_distance_squared < sphere_required_radius:
                 attempts += 1
                 continue
@@ -1369,8 +1432,8 @@ class CubeNavigationEnv_class(gym.Env):
                     half_size_x = geom_size_data[0]
                     half_size_y = geom_size_data[1]
 
-                    check_x = abs(x - other_pos[0]) < obs_half_x + half_size_x + 0.5
-                    check_y = abs(y - other_pos[1]) < obs_half_y + half_size_y + 0.5
+                    check_x = abs(x - other_pos[0]) < obs_half_x + half_size_x + safety_margin
+                    check_y = abs(y - other_pos[1]) < obs_half_y + half_size_y + safety_margin
 
                     if check_x and check_y:
                         too_close = True
@@ -1387,6 +1450,7 @@ class CubeNavigationEnv_class(gym.Env):
         y = radius * np.sin(angle)
         return np.clip(x, min_x, max_x), np.clip(y, min_y, max_y), 1, 1
 
+
     def _place_obstacles_in_circle(self, radius=10.0):
         """Place all obstacles in a circle pattern as fallback."""
         for i in range(1, 21):
@@ -1396,6 +1460,7 @@ class CubeNavigationEnv_class(gym.Env):
                 x = radius * np.cos(angle)
                 y = radius * np.sin(angle)
                 self.model.body_pos[obstacle_body_id, :2] = [x, y]
+
 
 
     def render(self):

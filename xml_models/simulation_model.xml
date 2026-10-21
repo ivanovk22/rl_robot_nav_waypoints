@@ -158,6 +158,8 @@
         <!--    </body>-->
 
 
+
+
         <body name="obstacle1" pos="-6.259192928985064 -32.054124961901856 0.5">
             <geom name="obstacle1" type="box" size="1.0177055775678152 0.40475464797317784 0.5" mass="1.0"
                   material="cube_material" contype="1" conaffinity="1"/>
@@ -1649,8 +1651,27 @@
         </body>
 
 
-<!--        <body name="obstacle299" pos="0 -8 0.5">-->
-<!--            <geom name="obstacle299" type="box" size="1.5 1.5 0.5" mass="1.0"-->
+<!--    Try with size 1x1 - it goes through the room hahahah-->
+<!--        <body name="obstacle299" pos="1.503 22.633 0.5">-->
+<!--            <geom name="obstacle299" type="box" size="0.4 0.4 0.5" mass="1.0"-->
+<!--                  material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle300" pos="0 -7 0.5">-->
+<!--            <geom name="obstacle300" type="box" size="1 1.3 0.5" mass="1.0"-->
+<!--                  material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+
+<!--        <body name="obstacle300" pos="1.503 24 0.5">-->
+<!--            <geom name="obstacle300" type="box" size="1 1 0.5" mass="1.0"-->
+<!--                  material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+<!--        <body name="obstacle301" pos="1 24 0.5">-->
+<!--            <geom name="obstacle301" type="box" size="1 1 0.5" mass="1.0"-->
+<!--                  material="cube_material" contype="1" conaffinity="1"/>-->
+<!--        </body>-->
+<!--        <body name="obstacle302" pos="1.5 27 0.5">-->
+<!--            <geom name="obstacle302" type="box" size="1 1 0.5" mass="1.0"-->
 <!--                  material="cube_material" contype="1" conaffinity="1"/>-->
 <!--        </body>-->
 

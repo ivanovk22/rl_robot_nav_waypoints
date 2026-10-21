@@ -74,6 +74,10 @@ def evaluate_with_info(model: "type_aliases.PolicyPredictor",
         )
 
         new_observations, rewards, dones, infos = env.step(actions)
+        # print('new_observations', new_observations)
+        # print('rewards', rewards)
+        # print('dones', dones)
+        # print('infos', infos)
         current_rewards += rewards
         current_lengths += 1
         for i in range(n_envs):
@@ -131,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_rays", type=int, default=180, help="Number of LiDAR rays around the sphere.")
     parser.add_argument("--model_path", type=str, default="xml_models/simulation_model.xml",
                         help="Path to the MuJoCo model XML file.")
-    parser.add_argument("--run_id", type=str, default="TEST_lidarscnas", help="Run ID for TensorBoard logging.")
+    parser.add_argument("--run_id", type=str, default="TEST_lidarscans", help="Run ID for TensorBoard logging.")
     args = parser.parse_args()
     name = args.run_id
 

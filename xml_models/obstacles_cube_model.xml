@@ -50,6 +50,7 @@
         <geom name="wall_east" type="box" size="8 0.5 2" pos="0 -8 2" material="wall_material"/>
 
 
+
         <body name="obstacle1" pos="0 0 1">
             <geom name="obstacle1" type="box" size="1 1 1" mass="1.0" material="cube_material" contype="1" conaffinity="1"/>
         </body>
